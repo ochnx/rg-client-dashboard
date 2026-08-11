@@ -1982,6 +1982,45 @@
       .demo-bar-value { width: auto; text-align: left; }
       .gender-pills { flex-direction: column; }
     }
+    /* Dashboard V2: one expandable row per program */
+    .prog-caret {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; margin-right: 8px; padding: 0;
+      font: inherit; font-size: 11px; line-height: 1;
+      color: var(--text-secondary); background: rgba(0,0,0,0.05);
+      border: 1px solid var(--border-subtle); border-radius: 6px;
+      cursor: pointer; vertical-align: middle;
+      transition: transform 180ms var(--ease-out-expo), background 150ms, color 150ms;
+    }
+    .prog-caret:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .prog-caret.open { transform: rotate(90deg); }
+    .prog-caret.open:hover { transform: rotate(90deg); }
+    .flight-tag, .dark-tag {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.03em;
+      padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+    }
+    .flight-tag { background: rgba(0,0,0,0.04); color: var(--text-secondary); border: 1px solid var(--border-subtle); }
+    .dark-tag { background: rgba(245,158,11,0.1); color: #b45309; border: 1px solid rgba(245,158,11,0.25); }
+    .campaign-subitem {
+      padding-left: 44px; background: rgba(0,0,0,0.015); overflow: hidden;
+      position: relative; transform-origin: top center; will-change: height, opacity, transform;
+      transition: height 320ms var(--ease-out-expo), opacity 260ms var(--ease-out-expo),
+        transform 320ms var(--ease-out-expo), background 150ms var(--transition-fast);
+    }
+    .campaign-subitem:hover { background: rgba(0,0,0,0.03); }
+    .campaign-subitem.is-entering, .campaign-subitem.is-leaving {
+      opacity: 0; transform: translateY(-6px); padding-top: 0; padding-bottom: 0;
+      border-bottom-color: transparent;
+    }
+    .campaign-subitem::before {
+      content: ''; position: absolute; left: 26px; top: 0; bottom: 0; width: 1px;
+      background: linear-gradient(to bottom, transparent 0%, var(--border) 18%, var(--border) 82%, transparent 100%);
+    }
+    .campaign-item:active { transform: scale(0.995); }
+    .prog-caret:active { transform: scale(0.9); }
+    .prog-caret.open:active { transform: rotate(90deg) scale(0.9); }
+    .prog-caret:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
   </style>
 </head>
 <body>
@@ -2623,6 +2662,7 @@ const SB_HEADERS = {
 // ============================================
 let clientData = null;    // { name, brand, logo_url, primary_color }
 let dashboardPayload = null;
+let programs = [];
 let allProperties = [];
 let campaigns = [];       // enriched campaign objects
 let allMetrics = [];      // all campaign_daily_metrics
@@ -2631,16 +2671,13 @@ let allCreativeDailyMetrics = [];
 let allGeoInsights = [];
 let allDemoInsights = [];
 
-// IDs of A/B Test Landing Page campaigns — shown in UI but excluded from all calculations
-const EXCLUDED_CAMPAIGN_IDS = new Set([
-  '2f3193fa-d115-469d-aa01-d46cd5ff0d24', // Völckersstraße Conversions (A/B Test LP)
-  'd2d820d9-7d9b-4091-afc6-b2c9651b37ec'  // Von-Siemens-Straße Conversions (A/B Test LP)
-]);
-function isExcludedCampaign(id) { return EXCLUDED_CAMPAIGN_IDS.has(id); }
+// Every Meta campaign is a flight of a program and belongs in the totals.
+function isExcludedCampaign() { return false; }
 let trendChart = null;
 let detailChartInstance = null;
 let currentSort = { field: 'status', dir: 'asc' };
 let currentStatusFilter = 'all';
+let expandedPrograms = new Set();
 
 function filterByStatus(status) {
   currentStatusFilter = status;
@@ -2651,6 +2688,7 @@ function filterByStatus(status) {
 }
 let currentFilter = 'all'; // 'all' or 'YYYY-MM'
 let currentDetailCampaignId = null;
+let currentDetailCampaignIds = [];
 
     // Audience insight state
     let _globalGeoData = null;
@@ -2835,6 +2873,7 @@ async function attemptLogin() {
 function logout() {
   clientData = null;
   dashboardPayload = null;
+  programs = [];
   allProperties = [];
   campaigns = [];
   allMetrics = [];
@@ -2842,6 +2881,9 @@ function logout() {
   allCreativeDailyMetrics = [];
   allGeoInsights = [];
   allDemoInsights = [];
+  expandedPrograms = new Set();
+  currentDetailCampaignId = null;
+  currentDetailCampaignIds = [];
   _predictionCreativesCache = null;
   _dataIntelLoaded = false;
   _globalAudienceLoaded = false;
@@ -2900,6 +2942,7 @@ async function loadDashboard() {
     }
 
     // All data arrived in one token-scoped RPC response.
+    programs = dashboardPayload.programs || [];
     allProperties = dashboardPayload.properties || [];
     campaigns = dashboardPayload.campaigns || [];
     allMetrics = (dashboardPayload.campaign_daily_metrics || []).sort(function(a, b) {
@@ -2910,18 +2953,23 @@ async function loadDashboard() {
     allGeoInsights = dashboardPayload.campaign_geo_insights || [];
     allDemoInsights = dashboardPayload.campaign_demo_insights || [];
 
-    if (allProperties.length === 0) {
-      document.getElementById('loadingScreen').style.display = 'none';
-      document.getElementById('dashboard').classList.add('active');
-      showEmpty();
-      return;
-    }
-
-    // Enrich campaigns with property data
+    // Enrich programs and campaigns from the flat, token-scoped RPC arrays.
     const propMap = Object.create(null);
-    allProperties.forEach(p => propMap[p.id] = p);
+    const programMap = Object.create(null);
+    allProperties.forEach(p => { propMap[p.id] = p; });
+    programs.forEach(p => {
+      p.properties = p.property_id && Object.prototype.hasOwnProperty.call(propMap, p.property_id)
+        ? propMap[p.property_id]
+        : Object.create(null);
+      programMap[p.id] = p;
+    });
     campaigns.forEach(c => {
-      c.property = propMap[c.property_id] || {};
+      c.property = c.property_id && Object.prototype.hasOwnProperty.call(propMap, c.property_id)
+        ? propMap[c.property_id]
+        : Object.create(null);
+      c.program = c.program_id && Object.prototype.hasOwnProperty.call(programMap, c.program_id)
+        ? programMap[c.program_id]
+        : null;
     });
 
     if (campaigns.length === 0) {
@@ -3486,114 +3534,258 @@ function getISOWeek(date) {
 // ============================================
 // CAMPAIGN TABLE
 // ============================================
-function renderCampaignTable(metrics) {
-  const filteredMetricsMap = Object.create(null);
-  metrics.forEach(m => {
-    if (!filteredMetricsMap[m.campaign_id]) filteredMetricsMap[m.campaign_id] = { spend: 0, impressions: 0, clicks: 0, leads: 0 };
-    filteredMetricsMap[m.campaign_id].spend += parseFloat(m.spend) || 0;
-    filteredMetricsMap[m.campaign_id].impressions += parseInt(m.impressions) || 0;
-    filteredMetricsMap[m.campaign_id].clicks += parseInt(m.clicks) || 0;
-    filteredMetricsMap[m.campaign_id].leads += parseInt(m.leads) || 0;
+const KIND_META = Object.freeze(Object.assign(Object.create(null), {
+  objekt: { icon: '🏠', label: 'Objekt' },
+  eigentuemer: { icon: '🔑', label: 'Eigentümergewinnung' },
+  recruiting: { icon: '👤', label: 'Recruiting' }
+}));
+
+function programKind(program) {
+  const key = String((program && program.kind) || 'objekt');
+  return Object.prototype.hasOwnProperty.call(KIND_META, key) ? key : 'objekt';
+}
+
+function programLocation(program) {
+  if (!program) return '';
+  if (program.properties && program.properties.city) return String(program.properties.city);
+  const label = String(program.account_label || '');
+  const brand = String((clientData && (clientData.name || clientData.brand)) || '');
+  if (brand && label.toLowerCase().indexOf(brand.toLowerCase()) === 0) {
+    const rest = label.slice(brand.length).trim();
+    if (rest) return rest;
+  }
+  return label;
+}
+
+function programDisplayName(program) {
+  if (!program) return '—';
+  if (programKind(program) === 'objekt') {
+    return String(program.subject_label || program.name || '—');
+  }
+  const base = programKind(program) === 'eigentuemer' ? 'Eigentümergewinnung' : 'Recruiting';
+  const location = programLocation(program);
+  return location ? base + ' ' + location : base;
+}
+
+function buildProgramRows(metrics) {
+  const perCampaign = Object.create(null);
+  metrics.forEach(function(metric) {
+    if (!perCampaign[metric.campaign_id]) {
+      perCampaign[metric.campaign_id] = { spend: 0, impressions: 0, clicks: 0, leads: 0, dates: [] };
+    }
+    const total = perCampaign[metric.campaign_id];
+    total.spend += parseFloat(metric.spend) || 0;
+    total.impressions += parseInt(metric.impressions) || 0;
+    total.clicks += parseInt(metric.clicks) || 0;
+    total.leads += parseInt(metric.leads) || 0;
+    if ((parseFloat(metric.spend) || 0) > 0 && metric.date) total.dates.push(String(metric.date));
   });
 
-  let displayCampaigns = campaigns.map(c => {
-    const fm = filteredMetricsMap[c.id] || { spend: 0, impressions: 0, clicks: 0, leads: 0 };
-    return {
-      ...c,
+  const rows = Object.create(null);
+  campaigns.forEach(function(campaign) {
+    const program = campaign.program || Object.assign(Object.create(null), {
+      id: 'legacy:' + campaign.id,
+      kind: 'objekt',
+      name: (campaign.property && campaign.property.name) || campaign.campaign_name || '—',
+      subject_label: (campaign.property && campaign.property.name) || campaign.campaign_name || '—',
+      account_label: '',
+      properties: campaign.property || Object.create(null)
+    });
+    if (!rows[program.id]) {
+      rows[program.id] = { program: program, flights: [], spend: 0, leads: 0, impressions: 0, clicks: 0, dates: [] };
+    }
+    const row = rows[program.id];
+    const fm = perCampaign[campaign.id] || { spend: 0, impressions: 0, clicks: 0, leads: 0, dates: [] };
+    row.spend += fm.spend;
+    row.leads += fm.leads;
+    row.impressions += fm.impressions;
+    row.clicks += fm.clicks;
+    row.dates.push.apply(row.dates, fm.dates);
+    row.flights.push(Object.assign(Object.create(null), campaign, {
       fSpend: fm.spend,
       fLeads: fm.leads,
-      fImpressions: fm.impressions,
-      fClicks: fm.clicks,
-      fCPL: fm.leads > 0 ? fm.spend / fm.leads : Infinity
-    };
+      fCPL: fm.leads > 0 ? fm.spend / fm.leads : Infinity,
+      fDates: fm.dates.slice()
+    }));
   });
 
-  // Apply status filter
-  if (currentStatusFilter !== 'all') {
-    displayCampaigns = displayCampaigns.filter(c => (c.status || 'active') === currentStatusFilter);
-  }
-
-  const statusOrder = { active: 0, paused: 1, completed: 2 };
-
-  displayCampaigns.sort((a, b) => {
-    let va, vb;
-    switch (currentSort.field) {
-      case 'name':
-        va = (a.property?.name || a.campaign_name || '').toLowerCase();
-        vb = (b.property?.name || b.campaign_name || '').toLowerCase();
-        return currentSort.dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-      case 'period':
-        va = a.start_date || '';
-        vb = b.start_date || '';
-        return currentSort.dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-      case 'spend':
-        return currentSort.dir === 'asc' ? a.fSpend - b.fSpend : b.fSpend - a.fSpend;
-      case 'leads':
-        return currentSort.dir === 'asc' ? a.fLeads - b.fLeads : b.fLeads - a.fLeads;
-      case 'cpl':
-        va = a.fCPL === Infinity ? 999999 : a.fCPL;
-        vb = b.fCPL === Infinity ? 999999 : b.fCPL;
-        return currentSort.dir === 'asc' ? va - vb : vb - va;
-      case 'status':
-        va = statusOrder[a.status || 'active'] ?? 3;
-        vb = statusOrder[b.status || 'active'] ?? 3;
-        return currentSort.dir === 'asc' ? va - vb : vb - va;
-      default:
-        return 0;
+  return Object.values(rows).map(function(row) {
+    row.dates.sort();
+    row.flights.sort(function(a, b) {
+      return (a.flight_no || 0) - (b.flight_no || 0)
+        || String(a.start_date || '').localeCompare(String(b.start_date || ''));
+    });
+    row.cpl = row.leads > 0 ? row.spend / row.leads : Infinity;
+    row.status = row.flights.some(function(flight) { return (flight.status || 'active') === 'active'; })
+      ? 'active'
+      : row.flights.some(function(flight) { return flight.status === 'paused'; }) ? 'paused' : 'completed';
+    row.firstDay = row.dates[0] || row.flights[0].start_date || null;
+    row.lastDay = row.dates[row.dates.length - 1] || row.flights[row.flights.length - 1].end_date || null;
+    if (row.firstDay && row.lastDay) {
+      const span = Math.round((new Date(row.lastDay) - new Date(row.firstDay)) / 86400000) + 1;
+      row.darkDays = Math.max(0, span - new Set(row.dates).size);
+    } else {
+      row.darkDays = 0;
     }
+    return row;
   });
+}
 
-  // Update sort buttons
-  document.querySelectorAll('.sort-btn').forEach(btn => {
-    const isActive = btn.dataset.sort === currentSort.field;
-    btn.classList.toggle('active', isActive);
-    const arrow = btn.querySelector('.sort-arrow');
-    if (arrow) {
-      arrow.textContent = isActive ? (currentSort.dir === 'asc' ? '↑' : '↓') : '↕';
-    }
-  });
+function buildFlightRow(flight, index) {
+  const dates = flight.fDates.slice().sort();
+  const row = document.createElement('div');
+  row.className = 'campaign-item campaign-subitem';
+  row.onclick = function(event) { event.stopPropagation(); openDetail(flight.id); };
+  row.innerHTML =
+    '<div class="campaign-item-left">' +
+      '<div class="campaign-item-name campaign-subitem-name">Schaltung ' + (flight.flight_no || index + 1) + '</div>' +
+      '<div class="campaign-item-meta"><span>' + formatDateRange(dates[0] || flight.start_date, dates[dates.length - 1] || flight.end_date) + '</span>' +
+      '<span>' + new Set(dates).size + ' Tage</span></div>' +
+    '</div>' +
+    '<div class="campaign-item-right"><div class="campaign-item-cpl campaign-subitem-cpl">' +
+      (flight.fLeads > 0 ? formatEUR(flight.fCPL) : '—') +
+      '</div><div class="campaign-item-cpl-label">CPL</div><div class="campaign-item-leads">' +
+      formatNum(flight.fLeads) + ' Leads · ' + formatEUR(flight.fSpend) + ' Spend</div></div>';
+  return row;
+}
 
-  document.getElementById('campaignsTitle').textContent = `Kampagnen (${displayCampaigns.length})`;
-
+function toggleProgram(id, event) {
+  if (event) event.stopPropagation();
   const container = document.getElementById('campaignTableBody');
-  container.innerHTML = '';
-
-  if (displayCampaigns.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">Keine Kampagnen im gewählten Zeitraum</div>';
+  const row = Array.prototype.find.call(container.children, function(element) { return element._progId === id; });
+  if (!row) return;
+  const caret = row.querySelector('.prog-caret');
+  const isOpen = expandedPrograms.has(id);
+  if (isOpen) {
+    expandedPrograms.delete(id);
+    if (caret) { caret.classList.remove('open'); caret.setAttribute('aria-expanded', 'false'); }
+    const subs = [];
+    let next = row.nextElementSibling;
+    while (next && next._ownerProgId === id) { subs.push(next); next = next.nextElementSibling; }
+    subs.forEach(function(element, index) {
+      element.style.height = element.offsetHeight + 'px';
+      void element.offsetHeight;
+      element.style.transitionDelay = (subs.length - 1 - index) * 35 + 'ms';
+      element.classList.add('is-leaving');
+      element.style.height = '0px';
+    });
+    const last = subs[subs.length - 1];
+    if (last) {
+      const done = function() { subs.forEach(function(element) { element.remove(); }); };
+      last.addEventListener('transitionend', done, { once: true });
+      setTimeout(done, 500);
+    }
     return;
   }
 
-  displayCampaigns.forEach(c => {
-    const name = c.property?.name || c.campaign_name || '—';
-    const city = c.property?.city || '';
-    const status = c.status || 'active';
-    const statusBadge = status === 'active' ? 'badge-active' : status === 'paused' ? 'badge-paused' : 'badge-completed';
-    const statusLabel = status === 'active' ? 'Aktiv' : status === 'paused' ? 'Pausiert' : 'Abgeschl.';
-    const cplStr = c.fLeads > 0 ? formatEUR(c.fCPL) : '—';
-    // Landing Page badge for A/B test campaigns
-    const isLPCampaign = c.campaign_name && c.campaign_name.includes('Conversions');
-    const lpBadge = isLPCampaign ? '<span style="font-size:9px;padding:2px 6px;background:rgba(255,165,0,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);border-radius:4px;font-weight:600;letter-spacing:0.04em">LANDING PAGE</span>' : '';
+  expandedPrograms.add(id);
+  if (caret) { caret.classList.add('open'); caret.setAttribute('aria-expanded', 'true'); }
+  const data = row._progRow;
+  if (!data) return;
+  let anchor = row;
+  data.flights.forEach(function(flight, index) {
+    const sub = buildFlightRow(flight, index);
+    sub._ownerProgId = id;
+    sub.classList.add('is-entering');
+    anchor.after(sub);
+    anchor = sub;
+    const target = sub.scrollHeight;
+    sub.style.height = '0px';
+    void sub.offsetHeight;
+    sub.style.transitionDelay = index * 45 + 'ms';
+    sub.classList.remove('is-entering');
+    sub.style.height = target + 'px';
+    const release = function() { sub.style.height = ''; sub.style.transitionDelay = ''; };
+    sub.addEventListener('transitionend', function handler(e) {
+      if (e.propertyName !== 'height') return;
+      release();
+      sub.removeEventListener('transitionend', handler);
+    });
+    setTimeout(release, 400 + index * 45);
+  });
+}
 
+function renderCampaignTable(metrics) {
+  let rows = buildProgramRows(metrics);
+  if (currentStatusFilter !== 'all') rows = rows.filter(function(row) { return row.status === currentStatusFilter; });
+  const statusOrder = Object.freeze(Object.assign(Object.create(null), { active: 0, paused: 1, completed: 2 }));
+  rows.sort(function(a, b) {
+    let va, vb;
+    switch (currentSort.field) {
+      case 'name':
+        va = programDisplayName(a.program).toLowerCase(); vb = programDisplayName(b.program).toLowerCase();
+        return currentSort.dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+      case 'period':
+        va = a.firstDay || ''; vb = b.firstDay || '';
+        return currentSort.dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+      case 'spend': return currentSort.dir === 'asc' ? a.spend - b.spend : b.spend - a.spend;
+      case 'leads': return currentSort.dir === 'asc' ? a.leads - b.leads : b.leads - a.leads;
+      case 'cpl':
+        va = a.cpl === Infinity ? 999999 : a.cpl; vb = b.cpl === Infinity ? 999999 : b.cpl;
+        return currentSort.dir === 'asc' ? va - vb : vb - va;
+      case 'status':
+        va = statusOrder[a.status] ?? 3; vb = statusOrder[b.status] ?? 3;
+        return currentSort.dir === 'asc' ? va - vb : vb - va;
+      default: return 0;
+    }
+  });
+
+  document.querySelectorAll('.sort-btn').forEach(function(button) {
+    const active = button.dataset.sort === currentSort.field;
+    button.classList.toggle('active', active);
+    const arrow = button.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = active ? (currentSort.dir === 'asc' ? '↑' : '↓') : '↕';
+  });
+
+  const totalFlights = rows.reduce(function(sum, row) { return sum + row.flights.length; }, 0);
+  document.getElementById('campaignsTitle').textContent = totalFlights > rows.length
+    ? 'Kampagnen (' + rows.length + ' · ' + totalFlights + ' Schaltungen)'
+    : 'Kampagnen (' + rows.length + ')';
+  const container = document.getElementById('campaignTableBody');
+  container.replaceChildren();
+  if (rows.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'text-align:center;padding:40px;color:var(--text-muted)';
+    empty.textContent = 'Keine Kampagnen im gewählten Zeitraum';
+    container.appendChild(empty);
+    return;
+  }
+
+  rows.forEach(function(row) {
+    const program = row.program;
+    const kind = programKind(program);
+    const kindMeta = KIND_META[kind];
+    const multi = row.flights.length > 1;
+    const open = expandedPrograms.has(program.id);
+    const statusClass = row.status === 'active' ? 'badge-active' : row.status === 'paused' ? 'badge-paused' : 'badge-completed';
+    const statusLabel = row.status === 'active' ? 'Aktiv' : row.status === 'paused' ? 'Pausiert' : 'Abgeschl.';
+    const city = programLocation(program);
     const div = document.createElement('div');
     div.className = 'campaign-item';
-    div.onclick = () => openDetail(c.id);
-    div.innerHTML = `
-      <div class="campaign-item-left">
-        <div class="campaign-item-name">${escHtml(name)}</div>
-        <div class="campaign-item-meta">
-          <span class="badge ${statusBadge}" style="font-size:10px;padding:2px 8px"><span class="badge-dot"></span>${statusLabel}</span>
-          ${lpBadge}
-          ${city ? '<span>' + escHtml(city) + '</span>' : ''}
-          <span>${formatDateRange(c.start_date, c.end_date)}</span>
-        </div>
-      </div>
-      <div class="campaign-item-right">
-        <div class="campaign-item-cpl">${cplStr}</div>
-        <div class="campaign-item-cpl-label">CPL</div>
-        <div class="campaign-item-leads">${c.fLeads} Leads · ${formatEUR(c.fSpend)} Spend</div>
-      </div>
-    `;
+    div.onclick = function() { multi ? openProgramDetail(program.id) : openDetail(row.flights[0].id); };
+    div.innerHTML =
+      '<div class="campaign-item-left"><div class="campaign-item-name">' +
+        (multi ? '<button class="prog-caret ' + (open ? 'open' : '') + '" type="button" aria-expanded="' + open + '">▸</button>' : '') +
+        (kind !== 'objekt' ? kindMeta.icon + ' ' : '') + escHtml(programDisplayName(program)) +
+      '</div><div class="campaign-item-meta"><span class="badge ' + statusClass + '" style="font-size:10px;padding:2px 8px"><span class="badge-dot"></span>' + statusLabel + '</span>' +
+        (multi ? '<span class="flight-tag">' + row.flights.length + ' Schaltungen</span>' : '') +
+        (row.darkDays > 0 ? '<span class="dark-tag">' + row.darkDays + ' Tage Pause</span>' : '') +
+        (kind === 'objekt' && city ? '<span>' + escHtml(city) + '</span>' : '') +
+        '<span>' + formatDateRange(row.firstDay, row.lastDay) + '</span></div></div>' +
+      '<div class="campaign-item-right"><div class="campaign-item-cpl">' + (row.leads > 0 ? formatEUR(row.cpl) : '—') +
+        '</div><div class="campaign-item-cpl-label">CPL</div><div class="campaign-item-leads">' + formatNum(row.leads) + ' Leads · ' + formatEUR(row.spend) + ' Spend</div></div>';
+    div._progId = program.id;
+    div._progRow = row;
+    const caret = div.querySelector('.prog-caret');
+    if (caret) caret.onclick = function(event) { toggleProgram(program.id, event); };
     container.appendChild(div);
+    if (multi && open) {
+      row.flights.forEach(function(flight, index) {
+        const sub = buildFlightRow(flight, index);
+        sub._ownerProgId = program.id;
+        container.appendChild(sub);
+      });
+    }
   });
 }
 
@@ -3611,33 +3803,60 @@ function sortTable(field) {
 // CAMPAIGN DETAIL
 // ============================================
 function openDetail(campaignId) {
-  const campaign = campaigns.find(c => c.id === campaignId);
+  const campaign = campaigns.find(function(item) { return item.id === campaignId; });
   if (!campaign) return;
-
-  currentDetailCampaignId = campaignId;
-  const prop = campaign.property || {};
-  const campaignMetrics = getFilteredMetrics().filter(m => m.campaign_id === campaignId);
-
-  // Title
-  document.getElementById('detailTitle').textContent = prop.name || campaign.campaign_name || '—';
-  document.getElementById('detailSubtitle').textContent = [prop.address, prop.city].filter(Boolean).join(', ') || campaign.platform || '';
-
-  // Calculate aggregates
-  let totalSpend = 0, totalLeads = 0, totalImpressions = 0, totalClicks = 0, totalReach = 0;
-  campaignMetrics.forEach(m => {
-    totalSpend += parseFloat(m.spend) || 0;
-    totalLeads += parseInt(m.leads) || 0;
-    totalImpressions += parseInt(m.impressions) || 0;
-    totalClicks += parseInt(m.clicks) || 0;
-    totalReach += parseInt(m.reach) || 0;
+  const program = campaign.program;
+  const flightLabel = program && campaign.flight_no ? ' — Schaltung ' + campaign.flight_no : '';
+  renderDetailView([campaignId], {
+    program: program,
+    property: campaign.property || Object.create(null),
+    title: (program ? programDisplayName(program) : (campaign.property && campaign.property.name) || campaign.campaign_name || '—') + flightLabel,
+    subtitle: campaign.campaign_name || ''
   });
-  const days = campaignMetrics.length;
+}
+
+function openProgramDetail(programId) {
+  const program = programs.find(function(item) { return item.id === programId; });
+  if (!program) return;
+  const flights = campaigns.filter(function(campaign) { return campaign.program_id === programId; });
+  if (flights.length === 0) return;
+  const location = programLocation(program);
+  renderDetailView(flights.map(function(flight) { return flight.id; }), {
+    program: program,
+    property: program.properties || Object.create(null),
+    title: programDisplayName(program),
+    subtitle: flights.length > 1
+      ? flights.length + ' Schaltungen' + (location ? ' · ' + location : '')
+      : (flights[0].campaign_name || '')
+  });
+}
+
+function renderDetailView(campaignIds, context) {
+  const ids = Array.from(new Set(campaignIds));
+  const idSet = new Set(ids);
+  currentDetailCampaignId = ids[0] || null;
+  currentDetailCampaignIds = ids;
+  const prop = context.property || Object.create(null);
+  const campaignMetrics = getFilteredMetrics().filter(function(metric) { return idSet.has(metric.campaign_id); });
+
+  document.getElementById('detailTitle').textContent = context.title || '—';
+  document.getElementById('detailSubtitle').textContent = context.subtitle || '';
+
+  let totalSpend = 0, totalLeads = 0, totalImpressions = 0, totalClicks = 0, totalReach = 0;
+  const activeDates = new Set();
+  campaignMetrics.forEach(function(metric) {
+    totalSpend += parseFloat(metric.spend) || 0;
+    totalLeads += parseInt(metric.leads) || 0;
+    totalImpressions += parseInt(metric.impressions) || 0;
+    totalClicks += parseInt(metric.clicks) || 0;
+    totalReach += parseInt(metric.reach) || 0;
+    if (metric.date && ((parseFloat(metric.spend) || 0) > 0 || (parseInt(metric.leads) || 0) > 0)) activeDates.add(metric.date);
+  });
+  const days = activeDates.size;
   const avgCPL = totalLeads > 0 ? totalSpend / totalLeads : null;
   const avgCPM = totalImpressions > 0 ? (totalSpend / totalImpressions) * 1000 : null;
   const leadsPerDay = days > 0 ? totalLeads / days : 0;
 
-  // 1. Property Details (without Standort-Rating & Mikrolage)
-  const propTypeLabel = formatPropertyType(prop.property_type);
   const detailSizeSqm = finiteNumberOrNull(prop.size_sqm);
   const detailPlotSize = finiteNumberOrNull(prop.plot_size);
   const detailRooms = finiteNumberOrNull(prop.rooms);
@@ -3651,7 +3870,7 @@ function openDetail(campaignId) {
   propHtml += '<div><div class="prop-label">Adresse</div><div class="prop-value">' + escHtml(prop.address || '—') + '</div></div>';
   propHtml += '<div><div class="prop-label">PLZ / Stadt</div><div class="prop-value">' + escHtml((prop.plz || '') + ' ' + (prop.city || '—')) + '</div></div>';
   if (prop.stadtteil) propHtml += '<div><div class="prop-label">Stadtteil</div><div class="prop-value">' + escHtml(prop.stadtteil) + '</div></div>';
-  propHtml += '<div><div class="prop-label">Objektart</div><div class="prop-value">' + escHtml(propTypeLabel) + '</div></div>';
+  propHtml += '<div><div class="prop-label">Objektart</div><div class="prop-value">' + escHtml(formatPropertyType(prop.property_type)) + '</div></div>';
   if (detailSizeSqm !== null) propHtml += '<div><div class="prop-label">Wohnfläche</div><div class="prop-value">' + formatNum(detailSizeSqm) + ' m²</div></div>';
   if (detailPlotSize !== null) propHtml += '<div><div class="prop-label">Grundstück</div><div class="prop-value">' + formatNum(detailPlotSize) + ' m²</div></div>';
   if (detailRooms !== null) propHtml += '<div><div class="prop-label">Zimmer</div><div class="prop-value">' + formatNum(detailRooms) + '</div></div>';
@@ -3663,44 +3882,38 @@ function openDetail(campaignId) {
     if (detailSizeTo !== null) propHtml += '<div><div class="prop-label">Fläche bis</div><div class="prop-value">' + formatNum(detailSizeTo) + ' m²</div></div>';
     if (detailNumUnits !== null) propHtml += '<div><div class="prop-label">Einheiten</div><div class="prop-value">' + formatNum(detailNumUnits) + '</div></div>';
   }
-  document.getElementById('detailPropertyGrid').innerHTML = propHtml;
+  const propGrid = document.getElementById('detailPropertyGrid');
+  const showProperty = (!context.program || programKind(context.program) === 'objekt') && Boolean(prop.id || prop.name);
+  propGrid.style.display = showProperty ? '' : 'none';
+  propGrid.innerHTML = showProperty ? propHtml : '';
 
-  // 2. KPI Cards
   document.getElementById('detailKpiGrid').innerHTML =
     '<div class="detail-kpi-card"><div class="kpi-label">Gesamtausgaben</div><div class="kpi-value">' + formatEUR(totalSpend) + '</div><div class="detail-kpi-sub">' + days + ' Tage · Ø ' + formatEUR(totalSpend / Math.max(days, 1)) + '/Tag</div></div>' +
-    '<div class="detail-kpi-card"><div class="kpi-label">Leads gesamt</div><div class="kpi-value">' + totalLeads + '</div><div class="detail-kpi-sub">Ø ' + leadsPerDay.toFixed(1) + ' Leads/Tag</div></div>' +
+    '<div class="detail-kpi-card"><div class="kpi-label">Leads gesamt</div><div class="kpi-value">' + formatNum(totalLeads) + '</div><div class="detail-kpi-sub">Ø ' + leadsPerDay.toFixed(1) + ' Leads/Tag</div></div>' +
     '<div class="detail-kpi-card"><div class="kpi-label">Ø Cost per Lead</div><div class="kpi-value">' + (avgCPL ? formatEUR(avgCPL) : '—') + '</div><div class="detail-kpi-sub">' + (avgCPL && avgCPL < 10 ? '✓ Unter 10 €' : 'Im Zielbereich') + '</div></div>' +
-    '<div class="detail-kpi-card"><div class="kpi-label">Impressions</div><div class="kpi-value">' + formatNum(totalImpressions) + '</div><div class="detail-kpi-sub">Reichweite: ' + formatNum(totalReach) + '</div></div>' +
+    '<div class="detail-kpi-card"><div class="kpi-label">Impressions</div><div class="kpi-value">' + formatNum(totalImpressions) + '</div><div class="detail-kpi-sub">Reichweite (summiert): ' + formatNum(totalReach) + '</div></div>' +
     '<div class="detail-kpi-card"><div class="kpi-label">Ø CPM</div><div class="kpi-value">' + (avgCPM ? formatEUR(avgCPM) : '—') + '</div><div class="detail-kpi-sub">Pro 1.000 Impressions</div></div>' +
     '<div class="detail-kpi-card"><div class="kpi-label">Lead-Rate</div><div class="kpi-value">' + (totalImpressions > 0 ? ((totalLeads / totalImpressions) * 100).toFixed(2) + '%' : '—') + '</div><div class="detail-kpi-sub">Leads / Impressions</div></div>';
 
-  // 3. Benchmark — compare against all client campaigns (green or grey only, never red)
-  renderDetailBenchmark(campaignId, totalSpend, totalLeads, totalImpressions, totalClicks, days);
-
-  // 4. Daily chart
+  renderDetailBenchmark(ids, totalSpend, totalLeads, totalImpressions, totalClicks, days);
   renderDetailChart(campaignMetrics);
+  renderCreativePerformance(ids, totalSpend, totalLeads);
 
-  // 5. Creative performance
-  renderCreativePerformance(campaignId, totalSpend, totalLeads);
-
-  // Disable background chart hover to prevent flicker (backdrop-filter + chart redraws = flicker)
   if (trendChart) {
     trendChart.options.events = [];
     trendChart.update('none');
   }
 
-  // Load audience insights for this campaign
   document.getElementById('detailAudienceWrapper').style.display = 'none';
-  loadCampaignAudienceData(campaignId).then(async function(data) {
+  loadCampaignAudienceData(ids).then(async function(data) {
     if (data) await renderCampaignAudienceInsights(data);
   });
 
-  // Show modal
   document.getElementById('detailModal').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
-function renderDetailBenchmark(campaignId, totalSpend, totalLeads, totalImpressions, totalClicks, days) {
+function renderDetailBenchmark(campaignIds, totalSpend, totalLeads, totalImpressions, totalClicks, days) {
   var container = document.getElementById('detailBenchmark');
 
   // Compute benchmark from all client campaigns (excluding A/B test LP campaigns)
@@ -3816,7 +4029,14 @@ function closeDetail() {
 }
 
 function renderDetailChart(metrics) {
-  const sorted = [...metrics].sort((a, b) => a.date.localeCompare(b.date));
+  const byDate = Object.create(null);
+  metrics.forEach(function(metric) {
+    if (!metric.date) return;
+    if (!byDate[metric.date]) byDate[metric.date] = { date: metric.date, spend: 0, leads: 0 };
+    byDate[metric.date].spend += parseFloat(metric.spend) || 0;
+    byDate[metric.date].leads += parseInt(metric.leads) || 0;
+  });
+  const sorted = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
   const labels = sorted.map(m => formatDateShort(m.date));
   const spendData = sorted.map(m => parseFloat(m.spend) || 0);
   const leadsData = sorted.map(m => parseInt(m.leads) || 0);
@@ -3926,11 +4146,12 @@ function renderDetailChart(metrics) {
   });
 }
 
-function renderCreativePerformance(campaignId, totalSpend, totalLeads) {
+function renderCreativePerformance(campaignIds, totalSpend, totalLeads) {
   const section = document.getElementById('creativeSection');
   const container = document.getElementById('creativeRanking');
 
-  const campCreatives = allCreatives.filter(c => c.campaign_id === campaignId);
+  const idSet = new Set(Array.isArray(campaignIds) ? campaignIds : [campaignIds]);
+  const campCreatives = allCreatives.filter(c => idSet.has(c.campaign_id));
 
   if (campCreatives.length === 0) {
     section.style.display = 'none';
@@ -5152,16 +5373,19 @@ async function predictPerformance() {
       }
     }
 
-    async function loadCampaignAudienceData(campaignId) {
-      if (_detailAudienceCache[campaignId]) return _detailAudienceCache[campaignId];
+    async function loadCampaignAudienceData(campaignIds) {
+      var ids = Array.from(new Set(Array.isArray(campaignIds) ? campaignIds : [campaignIds])).sort();
+      var cacheKey = ids.join('|');
+      if (_detailAudienceCache[cacheKey]) return _detailAudienceCache[cacheKey];
+      var idSet = new Set(ids);
       try {
-        var geoRaw = allGeoInsights.filter(function(row) { return row.campaign_id === campaignId; });
-        var demoRaw = allDemoInsights.filter(function(row) { return row.campaign_id === campaignId; });
-        _detailAudienceCache[campaignId] = {
+        var geoRaw = allGeoInsights.filter(function(row) { return idSet.has(row.campaign_id); });
+        var demoRaw = allDemoInsights.filter(function(row) { return idSet.has(row.campaign_id); });
+        _detailAudienceCache[cacheKey] = {
           geo: aggregateGeoData(geoRaw),
           demo: aggregateDemoData(demoRaw)
         };
-        return _detailAudienceCache[campaignId];
+        return _detailAudienceCache[cacheKey];
       } catch (e) {
         console.warn('Campaign audience data failed:', e);
         return null;
