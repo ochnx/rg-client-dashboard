@@ -3562,7 +3562,8 @@ function programDisplayName(program) {
   if (programKind(program) === 'objekt') {
     return String(program.subject_label || program.name || '—');
   }
-  const base = programKind(program) === 'eigentuemer' ? 'Eigentümergewinnung' : 'Recruiting';
+  // an owner-acquisition program may name its own topic, e.g. Vermietergewinnung next to Eigentümergewinnung
+  const base = programKind(program) === 'eigentuemer' ? String(program.subject_label || 'Eigentümergewinnung') : 'Recruiting';
   const location = programLocation(program);
   return location ? base + ' ' + location : base;
 }
