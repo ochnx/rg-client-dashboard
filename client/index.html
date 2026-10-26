@@ -5912,101 +5912,9 @@ function formatWithin(objects, creativeRows, cmp) {
 }
 
 // Kind of ad account of a phase: the agency's own ('own') or the client's ('client', a shared account
-// named in reporting_context); an object whose counted phases ran in both is 'both'
+// named in reporting_context)
 function intelAccountKind(c) {
   return intelAccount(c) === 'own' ? 'own' : 'client';
-}
-function intelObjectAccountKind(o) {
-  const acc = o.accounts && o.accounts.length ? o.accounts : ['own'];
-  const own = acc.indexOf('own') >= 0;
-  return own && acc.length > 1 ? 'both' : own ? 'own' : 'client';
-}
-
-// Ordinary least squares of ln(cost per lead) on the account (1 = the client's) and ln(purchase price),
-// with an intercept; the account's coefficient, NaN when the data cannot separate the two (one account
-// only, or one price only). Solved on centred values, so no matrix library is needed.
-function intelAccountFit(points) {
-  const n = points.length;
-  if (n < 3) return NaN;
-  const mean = function(k) { return points.reduce(function(t, p) { return t + p[k]; }, 0) / n; };
-  const my = mean('y'), ma = mean('a'), mx = mean('x');
-  let saa = 0, sax = 0, sxx = 0, say = 0, sxy = 0;
-  points.forEach(function(p) {
-    const a = p.a - ma, x = p.x - mx, y = p.y - my;
-    saa += a * a; sax += a * x; sxx += x * x; say += a * y; sxy += x * y;
-  });
-  const det = saa * sxx - sax * sax;
-  return saa > 0 && sxx > 0 && det > 1e-9 * saa * sxx ? (say * sxx - sxy * sax) / det : NaN;
-}
-
-// "Auch bei gleichem Kaufpreis": the account's difference in the cost per lead with the purchase price held
-// equal (regression over the campaigns with a price and a lead; dearer properties often have dearer leads).
-// Range: the campaigns resampled inside each account (seeded). Shown from 12 campaigns with a price.
-function accountPriceEffect(units, seed) {
-  const pts = units.filter(function(u) { return u.price > 0 && Number.isFinite(u.cpl) && u.cpl > 0; })
-    .map(function(u) { return { y: Math.log(u.cpl), a: u.client ? 1 : 0, x: Math.log(u.price) }; });
-  const A = pts.filter(function(p) { return p.a; }), B = pts.filter(function(p) { return !p.a; });
-  const out = { n: pts.length, nA: A.length, nB: B.length, shown: false };
-  const b = intelAccountFit(pts);
-  if (pts.length < INTEL.minUnits || A.length < 2 || B.length < 2 || !Number.isFinite(b)) return out;
-  out.effect = (Math.exp(b) - 1) * 100;
-  const rand = intelRandom(INTEL.seed + seed);
-  const draw = function(list) { const d = []; for (let i = 0; i < list.length; i++) d.push(list[Math.floor(rand() * list.length)]); return d; };
-  const boot = [];
-  for (let k = 0; k < INTEL.draws; k++) {
-    const v = intelAccountFit(draw(A).concat(draw(B)));
-    if (Number.isFinite(v)) boot.push((Math.exp(v) - 1) * 100);
-  }
-  out.ci80 = intelInterval(boot, 0.8);
-  out.ci95 = intelInterval(boot, 0.95);
-  out.shown = true;
-  return out;
-}
-
-// Oskar, 26.10.2026: "Werbekonto bei den verschiedenen Phasen hinzufügen … und in die Data Intelligence mit
-// reinbringen". Objects by the kind of account of their counted phases, the client's against the agency's
-// own (objects in both are left out and counted, `both`), each at its cost per lead over the comparison
-// budget (the budget of campaignUnits, intelAtBudget). campaignContrast in one stratum: A the client's
-// account, B the agency's; effect = median A / median B − 1, the range resampled inside each group, the
-// usual stages (12 campaigns with 4 in each account; a first reading at most while the two accounts never ran at
-// the same time, since then account and period changed together). `kinds`: whether the client has objects of both kinds
-// at all; first/last: the first delivery days of each group's campaigns (names their months); from/to: their
-// delivery (overlap: whether the two accounts ran at the same time); `price`: accountPriceEffect.
-function accountComparison(objects, budget) {
-  const units = [];
-  let both = 0, short = 0, pending = 0;
-  const kinds = new Set();
-  objects.forEach(function(o) {
-    const kind = intelObjectAccountKind(o);
-    kinds.add(kind);
-    if (kind === 'both') { both += 1; return; }
-    const at = intelAtBudget(o.series, budget);
-    if (!at) { if ((o.spendAll || 0) >= budget) pending += 1; else short += 1; return; }
-    const price = o.property && parseFloat(o.property.price);
-    units.push({ id: o.id, name: o.name, programId: o.programId, spend: at.spend, leads: at.leads, cpl: at.leads > 0 ? at.spend / at.leads : Infinity,
-      client: kind === 'client', stratum: 'account', first: o.firstDelivery || '', last: o.lastDelivery || '', price: price > 0 ? price : null });
-  });
-  const out = campaignContrast(units, function(u) { return u.client; }, { key: 'account', seed: 51 });
-  const span = function(list) {
-    const firsts = list.map(function(u) { return u.first; }).filter(Boolean).sort(), lasts = list.map(function(u) { return u.last; }).filter(Boolean).sort();
-    return { n: list.length, first: firsts[0] || '', last: firsts[firsts.length - 1] || '', from: firsts[0] || '', to: lasts[lasts.length - 1] || '' };
-  };
-  const A = units.filter(function(u) { return u.client; }), B = units.filter(function(u) { return !u.client; });
-  out.client = span(A);
-  out.own = span(B);
-  out.overlap = Boolean(A.length && B.length && out.client.from <= out.own.to && out.own.from <= out.client.to);
-  // account and period changed together: the difference cannot be put down to the account, so a first
-  // reading at most (the format comparison counts campaigns of the same account and period only)
-  out.capped = !out.overlap && out.level > 1;
-  if (out.capped) out.level = 1;
-  out.mixed = kinds.has('own') && kinds.has('client');
-  out.both = both;
-  out.short = short;
-  out.pending = pending;
-  out.budget = budget;
-  out.price = accountPriceEffect(units, 52);
-  out.shown = out.mixed && out.level >= 1;
-  return out;
 }
 
 // Talking head and scenic video, each inside its campaigns (formatWithin, `within`) and between whole
@@ -6231,8 +6139,6 @@ function intelComparisons() {
   const data = intelData();
   if (!data.comparisons) {
     data.comparisons = campaignComparisons(data.objects, data.creatives);
-    // the client's account against the agency's, on the same comparison budget
-    data.comparisons.accounts = accountComparison(data.objects, data.comparisons.budget);
   }
   return data.comparisons;
 }
@@ -6341,7 +6247,7 @@ function renderIntelligence() {
   _corrStats = featureCorrelations(O).filter(function(c) { return c.shown; });
   if (_corrStats.length && !_corrStats.some(function(c) { return c.key === corrSelected; })) corrSelected = _corrStats[0].key;
   basis(waitingLine(O, cmp));
-  box.innerHTML = formatsHTML(cmp) + accountHTML(cmp.accounts, accountNames()) + rampHTML(ramp, marginal, weekend) + expectHTML(expect) + objectsHTML(shrink) +
+  box.innerHTML = formatsHTML(cmp) + rampHTML(ramp, marginal, weekend) + expectHTML(expect) + objectsHTML(shrink) +
     corrHTML() + audienceHTML(gender, ages, regions, audienceCover(O, regions)) + allocationHTML(alloc);
   applyIcons(box);
   growBars(box);
@@ -6917,112 +6823,6 @@ function formatsHTML(cmp) {
   return secHeadHTML('Welche Formate sich lohnen', formatsTipHTML(cmp), 'So vergleichen wir') +
     (cards.length ? '<div class="grid' + (cards.length === 2 && !tall ? ' g-2' : '') + '">' + cards.map(function(f) { return formatCardHTML(f, cmp.budget); }).join('') + '</div>' : '') +
     (tags.length ? '<div class="grid"' + (cards.length ? ' style="margin-top:14px"' : '') + '>' + tagListHTML(tags) + '</div>' : '');
-}
-
-// ---------- ad account: the client's own against the agency's ----------
-
-// The cost per lead of the client's account against the agency's in words, with the word that leads to the
-// other account: "rund doppelt so viel wie", "rund 30 % mehr als", "rund halb so viel wie", "etwa gleich viel wie"
-function accountFactorText(f, same) {
-  if (same || !Number.isFinite(f)) return 'etwa gleich viel wie';
-  const words = { 2: 'doppelt', 3: 'dreimal', 4: 'viermal' };
-  if (f >= 1.5) {
-    const m = Math.round(f * 2) / 2;
-    return 'rund ' + (words[m] || formatDecimal(m, m % 1 ? 1 : 0) + '-mal') + ' so viel wie';
-  }
-  if (f <= 2 / 3 && Math.round(2 / f) === 4) return 'rund halb so viel wie';
-  return 'rund ' + pctText(Math.round(Math.abs(f - 1) * 100), 0) + (f > 1 ? ' mehr als' : ' weniger als');
-}
-
-// An account by the name of its chip in the sheet: "Engel & Völkers-Konto", "Run & Gun-Konto" (the "&" kept with
-// its words, so a phone does not end a line on "Engel &")
-function accountLabel(name) {
-  return String(name).replace(/ & /g, '\u00a0&\u00a0') + '-Konto';
-}
-// The months in which a group's campaigns started, inside a sentence: "von Februar bis Mai 2026", "im Mai 2026"
-function accountMonths(g) {
-  const one = monthSpan(g.first, g.first) === monthSpan(g.first, g.last);
-  return (one ? 'im ' : 'von ') + monthSpan(g.first, g.last);
-}
-
-// "Im Engel & Völkers-Konto kostete ein Lead bei gleichem Budget im Mittel 15,63 € – rund doppelt so viel wie im
-// Run & Gun-Konto (7,35 €)." While the two accounts never ran at the same time, the months stand in the sentence,
-// since account and period changed together: "Von August bis Oktober 2026 im Engel & Völkers-Konto kostete … wie
-// von Februar bis Mai 2026 im Run & Gun-Konto (7,35 €)." count: "8 gegen 10 Kampagnen"; price: "Auch bei gleichem
-// Kaufpreis: rund +76 % (Spanne +45 % bis +115 %)" from 12 campaigns with a price and only while the periods
-// overlap (otherwise it would read as if everything but the account had been held equal; the info gives it).
-function accountSummary(a, names) {
-  const s = a.strata[0], f = s.medianA / s.medianB;
-  const client = accountLabel(names.client), own = accountLabel(names.own);
-  const when = function(g) { return a.overlap ? '' : accountMonths(g) + ' '; };
-  const lead = when(a.client) + 'im ' + client;
-  const head = lead.charAt(0).toUpperCase() + lead.slice(1) + ' kostete ein Lead bei gleichem Budget im Mittel ' + cplText(s.medianA) + ' – ' +
-    accountFactorText(f, a.same) + ' ' + when(a.own) + 'im ' + own + ' (' + cplText(s.medianB) + ')' +
-    (a.level === 1 && !a.same && !a.capped ? ', noch kein klarer Unterschied' : '') + '.';
-  const p = a.price;
-  const price = p && p.shown && a.overlap ? 'Auch bei gleichem Kaufpreis: rund ' + signedPct(p.effect) + ' (Spanne ' + signedPct(p.ci80[0]) + ' bis ' + signedPct(p.ci80[1]) + ')' : '';
-  return { head: head, count: formatNum(a.nA) + ' gegen ' + formatNum(a.nB) + ' Kampagnen', price: price };
-}
-
-// Both accounts as rows of campaign dots on one euro scale, the client's first, each with its typical
-// value ("im Mittel", as in the sentence above) and the months its campaigns started
-function accountStripHTML(a, names) {
-  const s = a.strata[0];
-  const scale = euroScale(s.unitsA.concat(s.unitsB).map(function(u) { return u.cpl; }));
-  const row = function(units, median, side, name, span) {
-    const label = accountLabel(name);
-    const dots = units.map(function(u) {
-      return { v: u.cpl, side: side, title: u.name + ' (' + label + '): ' + (Number.isFinite(u.cpl) ? formatEUR(u.cpl) + ' pro Lead' : 'kein Lead bis ' + formatEUR(a.budget)) };
-    });
-    // the count and months as their own item, so a phone wraps them under the typical value
-    return '<div class="fc-s"><div class="fc-l"><span class="fc-p">' + escHtml(label) + '</span><span class="fc-v"><span><i class="mk ' + side + '"></i>im Mittel <b>' +
-      cplText(median) + '</b></span></span><small class="fc-n">' + escHtml(plural(units.length, 'Kampagne', 'Kampagnen') + (span ? ', ' + span : '')) + '</small></div>' +
-      dotRowHTML(dots, [{ v: median, side: side, title: label + ' im Mittel: ' + cplText(median) + (Number.isFinite(median) ? ' pro Lead' : '') }], scale.at) + '</div>';
-  };
-  return '<div class="fc-strip">' + row(s.unitsA, s.medianA, 'a', names.client, monthSpan(a.client.first, a.client.last)) +
-    row(s.unitsB, s.medianB, 'b', names.own, monthSpan(a.own.first, a.own.last)) + scale.ticks + '</div>';
-}
-
-// The info: what is compared, which months each account covers, and plainly, when they do not overlap, that
-// account and period changed at the same time (then the price-controlled result stands here, not in the card,
-// with the season it cannot take out); who is left out, the stages and the range
-function accountTipHTML(a, names) {
-  const b = formatEUR(a.budget);
-  const client = accountLabel(names.client), own = accountLabel(names.own);
-  const lines = [
-    'Ganze Kampagnen nach dem Werbekonto, in dem ihre Phasen liefen, jeweils auf den ersten ' + b + ' Budget. Jeder Punkt ist eine Kampagne, der Strich der Wert ' +
-      'im Mittel: Die Hälfte der Kampagnen lag darunter, die Hälfte darüber.',
-    'Die Kampagnen im ' + own + ' starteten ' + accountMonths(a.own) + ', die im ' + client + ' ' + accountMonths(a.client) + '.'
-  ];
-  if (!a.overlap) {
-    lines.push('Die Zeiträume überschneiden sich nicht: Konto und Zeitraum haben gleichzeitig gewechselt. Ob das Konto oder die Jahreszeit den Unterschied macht, ' +
-      'kann nur ein paralleler Test zeigen. Deshalb bleibt es bei einer ersten Einschätzung.');
-  }
-  if (a.price && a.price.shown) {
-    lines.push(a.overlap ? '„Auch bei gleichem Kaufpreis“ rechnet heraus, dass teurere Objekte oft teurere Leads haben (' + plural(a.price.n, 'Kampagne', 'Kampagnen') + ' mit Kaufpreis).'
-      : 'Rechnet man heraus, dass teurere Objekte oft teurere Leads haben, bleiben rund ' + signedPct(a.price.effect) + ' (Spanne ' + signedPct(a.price.ci80[0]) + ' bis ' +
-        signedPct(a.price.ci80[1]) + ', ' + plural(a.price.n, 'Kampagne', 'Kampagnen') + ' mit Kaufpreis); die Jahreszeit lässt sich so nicht herausrechnen.');
-  }
-  if (a.both) lines.push(plural(a.both, 'Kampagne lief', 'Kampagnen liefen') + ' in beiden Konten und ' + (a.both === 1 ? 'zählt' : 'zählen') + ' nicht mit.');
-  if (a.short) lines.push(plural(a.short, 'Kampagne hat', 'Kampagnen haben') + ' ' + b + ' noch nicht erreicht; ' + (a.short === 1 ? 'sie fehlt.' : 'sie fehlen.'));
-  if (a.pending) {
-    lines.push((a.pending === 1 ? '1 weitere Kampagne hat ' + b + ' erreicht; sie kommt dazu,' : formatNum(a.pending) + ' weitere Kampagnen haben ' + b + ' erreicht; sie kommen dazu,') +
-      ' sobald die Leads ihrer letzten 7 Tage vollständig sind.');
-  }
-  const part = function(title, list) { return '<b>' + escHtml(title) + '</b>' + list.map(function(l) { return '<p>' + escHtml(l) + '</p>'; }).join(''); };
-  return part('So vergleichen wir', lines) + part('Einordnung', ['Erste Einschätzung ab 12 Kampagnen mit je 4 in jedem Konto. Tendenz bei klarer Spanne, belastbar ab 30 Kampagnen, ' +
-    'beides nur, wenn beide Konten zur selben Zeit liefen.', 'Spanne (80 %): ' + signedPct(a.ci80[0]) + ' bis ' + signedPct(a.ci80[1]) + '.']);
-}
-
-// After the formats: the client's account against the agency's, only for clients whose objects ran in both
-// kinds of account, and only from 12 campaigns with 4 in each (acc.shown)
-function accountHTML(a, names) {
-  if (!a || !a.shown) return '';
-  const sum = accountSummary(a, names);
-  const parts = [sum.count].concat(sum.price ? [sum.price] : []);
-  return secHeadHTML('Werbekonto', accountTipHTML(a, names), 'So vergleichen wir') +
-    '<div class="grid"><div class="card pad fc"><div class="card-h"><h3>Kampagnen nach Werbekonto</h3>' + certHTML(a.level) + '</div>' +
-    '<p class="fc-sum"><b>' + escHtml(sum.head) + '</b><span class="parts">' + partsHTML(parts) + '</span></p>' + accountStripHTML(a, names) + '</div></div>';
 }
 
 // Each feature in plain words. steps: the steps a reader can picture, largest first ([per, in a sentence,
