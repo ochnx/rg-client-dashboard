@@ -5740,6 +5740,8 @@ function campaignContrast(units, has, cmp) {
   out.level = out.n < INTEL.minUnits || A.length < 4 || B.length < 4 || !Number.isFinite(out.effect) ? 0
     : out.n >= 30 && A.length >= 10 && B.length >= 10 && out.leadsA >= 100 && out.leadsB >= 100 && clear(out.ci95) ? 3
     : clear(out.ci80) ? 2 : 1;
+  // Oskar, 26.10.2026: hidden until the comparison only pairs campaigns of the same account and period
+  out.level = 0;
   out.same = Number.isFinite(out.effect) && Math.abs(out.effect) < 5;
   return out;
 }
