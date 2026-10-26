@@ -494,9 +494,15 @@
     .row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
     .field-note { margin: -4px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
     .form-sep { height: 1px; background: var(--hair); margin: 2px 0; }
+    .pred-run { height: 46px; margin-top: 2px; border: 0; border-radius: 12px; background: linear-gradient(180deg, #EF4A43, #D92E27); color: #fff; font-weight: 600; cursor: pointer; box-shadow: 0 6px 16px rgba(231,53,46,.22); }
+    .pred-run:hover { box-shadow: 0 8px 20px rgba(231,53,46,.3); }
+    .pred-run:focus-visible { outline: 2px solid rgba(231,53,46,.45); outline-offset: 2px; }
     .form-input, .form-select { width: 100%; height: 42px; border: 0; border-radius: 11px; background: var(--fill); padding: 0 13px; font-size: 15px; transition: background-color .2s var(--ease); }
     .form-select { appearance: none; -webkit-appearance: none; background: var(--fill) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%238C8280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 13px center/12px; padding-right: 34px; }
     .form-input:focus, .form-select:focus { outline: 2px solid rgba(231,53,46,.45); background-color: #fff; }
+    .form-input:disabled, .form-select:disabled { color: var(--muted); cursor: not-allowed; opacity: .6; }
+    /* town suggestions open while typing; no native black triangle next to the grey chevron of the select */
+    #pred-city::-webkit-calendar-picker-indicator { display: none !important; opacity: 0; }
     .result { overflow: hidden; background: linear-gradient(135deg, #FFFFFF 0%, #FFF6F3 48%, #FCE7E3 100%); }
     .result-in { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; padding: 24px 26px 26px; }
     .result .lbl { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
@@ -766,35 +772,40 @@
     <section class="tab-content" id="tab-predictor">
       <div class="title-row"><div><h1>Prediction Engine</h1><p>Was kostet ein Lead für ein neues Objekt? Geschätzt aus Ihren eigenen abgeschlossenen Objekten.</p></div></div>
       <div class="pred">
-        <div class="card form">
+        <form class="card form" id="pred-form" novalidate onsubmit="event.preventDefault(); renderPrediction(true);">
           <p class="form-h">Objekt</p>
           <div class="field">
             <label for="pred-type">Objektart</label>
             <select class="form-select" id="pred-type">
+              <option value="" selected>Keine Angabe</option>
               <option value="wohnung">Wohnung</option>
               <option value="haus">Haus</option>
               <option value="villa">Villa</option>
               <option value="doppelhaushaelfte">Doppelhaushälfte</option>
               <option value="reihenhaus">Reihenhaus</option>
+              <option value="zweifamilienhaus">Zweifamilienhaus</option>
               <option value="penthouse">Penthouse</option>
               <option value="neubauprojekt">Neubauprojekt</option>
+              <option value="grundstueck">Grundstück</option>
+              <option value="gewerbe">Gewerbe</option>
               <option value="sonstige">Sonstige</option>
             </select>
           </div>
-          <div class="field"><label for="pred-city">Stadt</label><input class="form-input" id="pred-city" placeholder="Hamburg" autocomplete="off"></div>
+          <div class="field"><label for="pred-city">Stadt</label><input class="form-input" id="pred-city" placeholder="z. B. Hamburg" autocomplete="off" list="pred-cities"><datalist id="pred-cities"></datalist></div>
           <div class="row2">
-            <div class="field"><label for="pred-price">Kaufpreis in €</label><input class="form-input" id="pred-price" type="number" min="0" step="1000" placeholder="1200000"></div>
-            <div class="field"><label for="pred-size">Wohnfläche in m²</label><input class="form-input" id="pred-size" type="number" min="0" step="1" placeholder="120"></div>
+            <div class="field"><label for="pred-price">Kaufpreis in €</label><input class="form-input" id="pred-price" type="number" min="0" step="any" inputmode="numeric" placeholder="optional"></div>
+            <div class="field"><label for="pred-size">Wohnfläche in m²</label><input class="form-input" id="pred-size" type="number" min="0" step="any" inputmode="decimal" placeholder="optional"></div>
           </div>
-          <p class="field-note">Preis, Objektart, Fläche und Stadt wirken bisher nicht messbar auf die Prognose.</p>
+          <p class="field-note" id="pred-note">Ähnliche eigene Objekte zählen stärker. Leere Felder bleiben unberücksichtigt.</p>
           <div class="form-sep"></div>
           <p class="form-h">Planer</p>
           <div class="row2">
-            <div class="field"><label for="pred-daily">Tagesbudget in €</label><input class="form-input" id="pred-daily" type="number" min="1" step="1" oninput="updatePlanner()"></div>
+            <div class="field"><label for="pred-daily">Tagesbudget in €</label><input class="form-input" id="pred-daily" type="number" min="1" step="any" inputmode="decimal" oninput="updatePlanner()"></div>
             <div class="field"><label for="pred-days">Laufzeit in Tagen</label><input class="form-input" id="pred-days" type="number" min="1" max="120" step="1" oninput="updatePlanner()"></div>
           </div>
           <p class="field-note">Rechnung unter Annahmen: so viele Leads hatten Ihre Objekte bisher bei diesem Gesamtbudget.</p>
-        </div>
+          <button class="btn-primary pred-run" id="pred-run" type="submit">Prognose berechnen</button>
+        </form>
         <div id="pred-results"></div>
       </div>
       <div class="spacer"></div>
@@ -1489,15 +1500,34 @@ function DotGrid(host, opts) {
     if (x < 0 || y < 0 || x > view.width || y > view.height) return;
     shocks.push({ x, y, start: performance.now() }); if (shocks.length > 6) shocks.shift(); wake();
   };
+  const onOut = e => { if (!e.relatedTarget) onLeave(); };
+  const onVisible = () => { if (!document.hidden) wake(); };
   addEventListener('pointermove', onMove, { passive: true });
   addEventListener('pointerdown', onDown, { passive: true });
-  addEventListener('pointerout', e => { if (!e.relatedTarget) onLeave(); });
+  addEventListener('pointerout', onOut);
   addEventListener('blur', onLeave);
-  new ResizeObserver(() => { resize(); wake(); }).observe(canvas);
-  new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) wake(); }).observe(canvas);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+  const resizer = new ResizeObserver(() => { resize(); wake(); });
+  resizer.observe(canvas);
+  const watcher = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) wake(); });
+  watcher.observe(canvas);
+  document.addEventListener('visibilitychange', onVisible);
   resize(); wake();
-  return { wake };
+  // releases the WebGL context and every listener; a grid that is rebuilt (each new forecast)
+  // calls this first, otherwise the browser runs out of contexts and drops the oldest ones
+  const destroy = () => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0; visible = false;
+    removeEventListener('pointermove', onMove);
+    removeEventListener('pointerdown', onDown);
+    removeEventListener('pointerout', onOut);
+    removeEventListener('blur', onLeave);
+    document.removeEventListener('visibilitychange', onVisible);
+    resizer.disconnect(); watcher.disconnect();
+    const lose = gl.getExtension('WEBGL_lose_context');
+    if (lose) lose.loseContext();
+    canvas.remove();
+  };
+  return { wake, destroy };
 }
 
 // Dither: slow dithered waves; animated on large banners, a still frame as texture elsewhere
@@ -4801,6 +4831,16 @@ function intelBucket(value, buckets, upperOpen) {
 // the name: form, and form+web without website leads, are the Formular pool that is compared;
 // web phases (other way) and phases without a known way only count in the described data basis.
 // A property then only holds phases of the Formular way; days whose leads are pending are left out.
+// Whether phases with these statuses are over. Oskar, 26.10.2026: a phase paused in Meta counts as
+// completed once nothing has been delivered for 7 days (the lag after which Meta books no more leads);
+// any running phase keeps the whole set open. lastDelivery is the last day with spend.
+function intelSettled(statuses, lastDelivery, asOf) {
+  if (!statuses.length) return false;
+  if (statuses.every(function(st) { return st === 'completed'; })) return true;
+  if (!statuses.every(function(st) { return st === 'completed' || st === 'paused'; })) return false;
+  return Boolean(lastDelivery && asOf && lastDelivery <= addDays(asOf, -INTEL.lagDays));
+}
+
 function buildIntelObjects(campaignList, metrics, asOf, rule) {
   const quality = { censored: [], nonLeadgen: 0, conversionNamed: 0, trimmed: 0, withoutProperty: 0 };
   if (rule) Object.assign(quality, { otherWay: [], unknownWay: 0, mixedWithWebsite: 0, doubled: 0, weitere: 0, pending: 0 });
@@ -4825,7 +4865,7 @@ function buildIntelObjects(campaignList, metrics, asOf, rule) {
     const name = prop.name || (flights[0].program && flights[0].program.name) || 'Objekt';
     const days = Object.create(null);
     const used = [];
-    let censored = false;
+    let censored = false, lastSpend = '';
     flights.forEach(function(c) {
       const rows = rowsByCampaign[c.id] || [];
       if (rule) {
@@ -4853,6 +4893,8 @@ function buildIntelObjects(campaignList, metrics, asOf, rule) {
       rows.forEach(function(m) {
         const date = String(m.date || '');
         if (!parseDay(date)) return;
+        // last delivery over every row, pending ones too, for the 7-day rule of paused phases
+        if ((parseFloat(m.spend) || 0) > 0 && date > lastSpend) lastSpend = date;
         if (rule) {
           // described only: doubled website reports, further website requests, pending days
           if (m.doppelmessung === true) quality.doubled += 1;
@@ -4873,9 +4915,12 @@ function buildIntelObjects(campaignList, metrics, asOf, rule) {
     all.forEach(function(d, i) { d.day = i + 1; });
     if (!all.length) return;
     const statuses = used.map(campaignStatus);
-    const completed = statuses.every(function(st) { return st === 'completed'; });
-    // paused in Meta (no phase running): told apart from running ones, trimmed like them
-    const paused = !completed && statuses.indexOf('paused') >= 0 && statuses.every(function(st) { return st === 'completed' || st === 'paused'; });
+    const completed = intelSettled(statuses, lastSpend, asOf);
+    // paused in Meta (no phase running): completed after 7 days without delivery (pausedDone), before
+    // that told apart from running ones and trimmed like them
+    const hasPaused = statuses.indexOf('paused') >= 0;
+    const paused = !completed && hasPaused && statuses.every(function(st) { return st === 'completed' || st === 'paused'; });
+    const pausedDone = completed && hasPaused;
     const keep = function(d) { return completed || !cutoff || d.date <= cutoff; };
     const series = all.filter(keep), rows = dated.filter(keep);
     if (series.length < all.length) quality.trimmed += 1;
@@ -4885,9 +4930,11 @@ function buildIntelObjects(campaignList, metrics, asOf, rule) {
       campaignIds: used.map(function(c) { return c.id; }),
       // time zone of the daily values (weekday analyses run per time zone)
       timezone: (function(tz) { return typeof tz === 'string' && tz ? tz : 'Europe/Berlin'; })(used[0].reporting_context && used[0].reporting_context.timezone),
-      completed: completed, paused: paused, series: series,
+      completed: completed, paused: paused, pausedDone: pausedDone, series: series,
       spend: sum('spend'), leads: sum('leads'), impressions: sum('impressions'),
-      deliveryDays: series.length, firstDelivery: all[0].date, lastDelivery: all[all.length - 1].date
+      deliveryDays: series.length, firstDelivery: all[0].date, lastDelivery: all[all.length - 1].date,
+      // last day with spend over every row (pending ones too), named for paused objects that count as completed
+      lastSpend: lastSpend
     });
   });
   objects.sort(function(a, b) { return a.firstDelivery < b.firstDelivery ? -1 : a.firstDelivery > b.firstDelivery ? 1 : 0; });
@@ -4927,17 +4974,173 @@ function jackknifePlusMedian(values, alpha) {
   return { point: intelMedian(values), lo: kLo >= 1 ? lo[kLo - 1] : -Infinity, hi: kHi <= n ? hi[kHi - 1] : Infinity };
 }
 
-// Expected cost per lead of a new property: median of the client's own completed properties
-// with at least 20 leads, 80 % Jackknife+ range from 4 properties. Traffic light: green from 8,
-// yellow 4 to 7, red below (no number, only the own values). No feature changes the number yet.
-function cplForecast(objects) {
+// Oskar, 26.10.2026: the planned property's details must move the forecast. Each own property
+// counts by its similarity to the planned one (type, place, price, living area); a floor keeps
+// every property in, and a detail left empty leaves its factor at 1. Checked on the E&V data by
+// estimating each property from the others: as accurate as the unweighted forecast (about 16 %).
+// Price and area are soft (bandwidth 1 on the log ratio): narrower made far-off towns win on price
+// alone and was less accurate (16.7 % against 16.4 %).
+const INTEL_SIMILARITY = Object.freeze({ floor: 0.2, family: 0.7, otherType: 0.4, sameState: 0.7, farAway: 0.4, unknown: 0.6, bandwidth: 1 });
+const INTEL_TYPE_FAMILY = Object.freeze({ wohnung: 'wohnen', penthouse: 'wohnen', haus: 'haus', villa: 'haus', doppelhaushaelfte: 'haus', reihenhaus: 'haus', zweifamilienhaus: 'haus' });
+// Weights within 5 % of one another count as equal: the details then fit no own property better
+// than the others, and the forecast stays the plain one
+const INTEL_EVEN_WEIGHTS = 1.05;
+// Additions that name the same town: "Frankfurt a.M.", "Offenbach am Main", "Bad Homburg vor der Höhe"
+const INTEL_TOWN_SUFFIXES = Object.freeze([' am main', ' a. m.', ' a.m.', ' a.main', ' (main)', '/main', '/m.', ' vor der hoehe', ' v. d. h.', ' v.d.h.']);
+
+// One key per town: lower case, umlauts folded, the usual additions dropped, so "Muenchen" meets
+// "München" and "Frankfurt (Main)" meets "Frankfurt am Main". Other additions such as "(Oder)" stay.
+function intelTownKey(city) {
+  let c = String(city || '').normalize('NFC').trim().toLowerCase().replace(/\s+/g, ' ')
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+  INTEL_TOWN_SUFFIXES.forEach(function(s) { if (c.length > s.length && c.slice(-s.length) === s) c = c.slice(0, -s.length).trim(); });
+  return c;
+}
+
+// A federal state typed as such ("Hessen", "Bayern"); exact names only, never part of a word
+function intelRegionState(name) {
+  const c = intelTownKey(name);
+  if (!c) return null;
+  const key = Object.keys(REGION_TO_STATE_ID).find(function(k) { return intelTownKey(k) === c; });
+  if (key && Object.prototype.hasOwnProperty.call(STATE_NAMES, REGION_TO_STATE_ID[key])) return REGION_TO_STATE_ID[key];
+  return Object.keys(STATE_NAMES).find(function(id) { return intelTownKey(STATE_NAMES[id]) === c; }) || null;
+}
+
+// Federal state of a town, also for long names such as "Offenbach am Main" or "Hamburg-Blankenese".
+// No match inside a word: "Sachsenhausen" is not Sachsen, "Neubrandenburg" not Brandenburg, and
+// "Frankfurt (Oder)" is not Frankfurt am Main.
+function intelCityState(city) {
+  const c = intelTownKey(city);
+  if (!c) return null;
+  const keys = Object.keys(INTEL_CITY_STATE);
+  const key = keys.find(function(k) { return intelTownKey(k) === c; }) ||
+    keys.find(function(k) { return c.indexOf(intelTownKey(k) + '-') === 0; });
+  return key ? INTEL_CITY_STATE[key] : intelRegionState(city);
+}
+
+// The planned property as the forecast reads it: only filled details count
+function intelPlanned(raw) {
+  const r = raw || {};
+  const num = function(v) { const x = parseFloat(v); return x > 0 ? x : null; };
+  return { type: String(r.type || '').trim().toLowerCase(), city: String(r.city || '').trim(), price: num(r.price), size: num(r.size) };
+}
+
+function intelPlannedActive(input) {
+  return Boolean(input && (input.type || input.city || input.price || input.size));
+}
+
+// The planned details against the own properties: a place that names the district of an own
+// property ("Blankenese", "Hamburg-Blankenese") stands for that property's town
+function intelPlannedFor(raw, props) {
+  const input = intelPlanned(raw);
+  if (!input.city) return input;
+  const c = intelTownKey(input.city), own = (props || []).filter(function(p) { return p && p.city; });
+  if (own.some(function(p) { return intelTownKey(p.city) === c; })) return input;
+  const hit = own.find(function(p) { return p.stadtteil && intelTownKey(p.stadtteil) === c; }) ||
+    own.find(function(p) { return c.indexOf(intelTownKey(p.city) + '-') === 0; });
+  return hit ? Object.assign({}, input, { city: String(hit.city) }) : input;
+}
+
+// Similarity of one own property to the planned one, as a product of factors between 0 and 1
+function intelSimilarity(input, prop) {
+  const S = INTEL_SIMILARITY, p = prop || {}, parts = Object.create(null);
+  if (input.type) {
+    const b = String(p.property_type || '').toLowerCase();
+    parts.type = !b ? S.unknown : input.type === b ? 1
+      : INTEL_TYPE_FAMILY[input.type] && INTEL_TYPE_FAMILY[input.type] === INTEL_TYPE_FAMILY[b] ? S.family : S.otherType;
+  }
+  if (input.city) {
+    const b = intelTownKey(p.city), sa = intelCityState(input.city), sb = intelCityState(p.city);
+    parts.place = !b ? S.unknown : intelTownKey(input.city) === b ? 1 : sa && sa === sb ? S.sameState : S.farAway;
+  }
+  [['price', 'price'], ['size', 'size_sqm']].forEach(function(k) {
+    if (!input[k[0]]) return;
+    const b = parseFloat(p[k[1]]);
+    if (!(b > 0)) { parts[k[0]] = S.unknown; return; }
+    const d = Math.log(input[k[0]] / b) / S.bandwidth;
+    parts[k[0]] = Math.exp(-d * d / 2);
+  });
+  return Object.keys(parts).reduce(function(s, k) { return s * parts[k]; }, 1);
+}
+
+// Weights of the own properties (floor + similarity) for the planned details, or null when no
+// detail is given or the details fit every property about equally (then all count the same)
+function intelPlannedWeights(input, props) {
+  if (!intelPlannedActive(input) || !props.length) return null;
+  const w = props.map(function(p) { return INTEL_SIMILARITY.floor + intelSimilarity(input, p); });
+  return Math.max.apply(null, w) > INTEL_EVEN_WEIGHTS * Math.min.apply(null, w) ? w : null;
+}
+
+// The properties that count most, for the note: whole groups of equal weight above the equal
+// share; a later group only while all named stay at 3 at most
+function intelSimilarLeaders(rows) {
+  const n = rows.length, sorted = rows.slice().sort(function(a, b) { return b.weight - a.weight; });
+  const out = [];
+  for (let i = 0; i < n;) {
+    let j = i + 1;
+    while (j < n && sorted[i].weight - sorted[j].weight <= 1e-9 * sorted[i].weight) j++;
+    if (sorted[i].weight * n <= 1 + 1e-9 || j === n || (out.length && j > 3)) break;
+    out.push.apply(out, sorted.slice(i, j));
+    i = j;
+  }
+  return out;
+}
+
+// The planned details applied to an own property, for its leave-one-out estimate
+function intelAsPlanned(input, prop) {
+  const p = prop || {};
+  return { type: input.type ? String(p.property_type || '').toLowerCase() : '', city: input.city ? String(p.city || '') : '',
+    price: input.price ? (parseFloat(p.price) > 0 ? parseFloat(p.price) : null) : null,
+    size: input.size ? (parseFloat(p.size_sqm) > 0 ? parseFloat(p.size_sqm) : null) : null };
+}
+
+// Weighted geometric mean of the cost per lead with an 80 % Jackknife+ range (Barber et al.): each
+// property is left out once; its residual comes from the others weighted by similarity to it.
+// `accuracy` is the typical leave-one-out miss (geometric mean of the ratios, minus 1).
+function similarityForecast(rows, input, alpha) {
+  const n = rows.length;
+  if (n < 4) return null;
+  const y = rows.map(function(r) { return Math.log(r.cpl); });
+  const weightsFor = function(inp) { return rows.map(function(r) { return INTEL_SIMILARITY.floor + intelSimilarity(inp, r.property); }); };
+  const mean = function(w, skip) {
+    let s = 0, t = 0;
+    for (let j = 0; j < n; j++) if (j !== skip) { s += w[j] * y[j]; t += w[j]; }
+    return s / t;
+  };
+  const w = weightsFor(input);
+  const lo = [], hi = [];
+  let miss = 0;
+  for (let i = 0; i < n; i++) {
+    const own = weightsFor(intelAsPlanned(input, rows[i].property));
+    const r = Math.abs(y[i] - mean(own, i));
+    const m = mean(w, i);
+    lo.push(m - r);
+    hi.push(m + r);
+    miss += r;
+  }
+  lo.sort(function(a, b) { return a - b; });
+  hi.sort(function(a, b) { return a - b; });
+  const kLo = Math.floor(alpha * (n + 1)), kHi = Math.ceil((1 - alpha) * (n + 1));
+  const total = w.reduce(function(s, v) { return s + v; }, 0);
+  const share = w.map(function(v) { return v / total; });
+  return { point: Math.exp(mean(w, -1)), lo: Math.exp(kLo >= 1 ? lo[kLo - 1] : -Infinity), hi: Math.exp(kHi <= n ? hi[kHi - 1] : Infinity),
+    weights: share, effN: 1 / share.reduce(function(s, v) { return s + v * v; }, 0), accuracy: Math.exp(miss / n) - 1 };
+}
+
+// Expected cost per lead of a new property from the client's own completed properties with at
+// least 20 leads, weighted by similarity to the planned details; 80 % Jackknife+ range from 4
+// properties. Traffic light: green from 8, yellow 4 to 7, red below (no number, only own values).
+function cplForecast(objects, plannedInput) {
   const base = forecastBase(objects);
   const rows = base.map(function(o) {
     return { id: o.id, name: o.name, property: o.property, programId: o.programId, cpl: o.spend / o.leads,
-      leads: o.leads, spend: o.spend, days: o.deliveryDays };
+      leads: o.leads, spend: o.spend, days: o.deliveryDays, pausedDone: Boolean(o.pausedDone) };
   }).sort(function(a, b) { return a.cpl - b.cpl; });
   const n = rows.length;
-  const out = { n: n, rows: rows, weight: n ? 1 / n : 0, status: n >= 8 ? 'green' : n >= 4 ? 'yellow' : 'red' };
+  const input = intelPlannedFor(plannedInput, rows.map(function(r) { return r.property; }));
+  // details given (active), and whether they tell the properties apart (weighted)
+  const out = { n: n, rows: rows, active: intelPlannedActive(input), weighted: false, leaders: [], status: n >= 8 ? 'green' : n >= 4 ? 'yellow' : 'red' };
+  rows.forEach(function(r) { r.weight = n ? 1 / n : 0; });
   if (!n) return out;
   const days = rows.map(function(r) { return r.days; }), spend = rows.map(function(r) { return r.spend; });
   const daily = rows.map(function(r) { return r.spend / r.days; });
@@ -4946,12 +5149,23 @@ function cplForecast(objects) {
   out.daily = [Math.min.apply(null, daily), Math.max.apply(null, daily)];
   out.typicalDaily = intelMedian(daily);
   out.typicalDays = intelMedian(days);
-  const jp = jackknifePlusMedian(rows.map(function(r) { return Math.log(r.cpl); }), 0.2);
-  if (jp) {
-    out.point = Math.exp(jp.point);
-    out.lo = Math.exp(jp.lo);
-    out.hi = Math.exp(jp.hi);
+  // details that fit every property about equally leave the plain forecast, so the page never
+  // claims a weighting that does not happen
+  const weighted = Boolean(intelPlannedWeights(input, rows.map(function(r) { return r.property; })));
+  const sf = similarityForecast(rows, weighted ? input : intelPlanned({}), 0.2);
+  if (sf) {
+    rows.forEach(function(r, i) { r.weight = sf.weights[i]; });
+    out.point = sf.point;
+    out.lo = sf.lo;
+    out.hi = sf.hi;
     out.wide = out.hi > 3 * out.lo;
+    out.accuracy = sf.accuracy;
+    out.effN = sf.effN;
+    if (weighted) {
+      out.weighted = true;
+      out.unweighted = similarityForecast(rows, intelPlanned({}), 0.2).point;
+      out.leaders = intelSimilarLeaders(rows);
+    }
   } else {
     out.median = Math.exp(intelMedian(rows.map(function(r) { return Math.log(r.cpl); })));
   }
@@ -4971,15 +5185,38 @@ function leadsAtSpend(series, mark) {
 
 // Planner: what the client's own completed properties had at this cumulative budget.
 // Median and range from 5 properties, single values for 3 or 4, nothing below.
-function plannerExpectation(objects, daily, days) {
+// Median of values with weights: the smallest value that reaches half the weight (the mean of two
+// values when one ends exactly at half)
+function intelWeightedMedian(pairs) {
+  const sorted = pairs.slice().sort(function(a, b) { return a.v - b.v; });
+  const total = sorted.reduce(function(s, x) { return s + x.w; }, 0);
+  let acc = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    acc += sorted[i].w;
+    if (Math.abs(acc - total / 2) < 1e-12 && i + 1 < sorted.length) return (sorted[i].v + sorted[i + 1].v) / 2;
+    if (acc > total / 2) return sorted[i].v;
+  }
+  return sorted.length ? sorted[sorted.length - 1].v : NaN;
+}
+
+// Planner weights: with planned details each property counts by its similarity, as in the forecast;
+// details that fit all about equally leave every weight at 1 (null)
+function plannerWeights(base, plannedInput) {
+  const props = base.map(function(o) { return o.property; });
+  return intelPlannedWeights(intelPlannedFor(plannedInput, props), props);
+}
+
+function plannerExpectation(objects, daily, days, plannedInput) {
   const base = forecastBase(objects);
+  const weights = plannerWeights(base, plannedInput);
   const budget = daily * days;
-  const values = base.map(function(o) { return leadsAtSpend(o.series, budget); })
-    .filter(function(v) { return v !== null; }).sort(function(a, b) { return a - b; });
-  const out = { budget: budget, n: values.length, of: base.length, values: values, warnings: [] };
+  const pairs = base.map(function(o, i) { return { v: leadsAtSpend(o.series, budget), w: weights ? weights[i] : 1 }; })
+    .filter(function(x) { return x.v !== null; });
+  const values = pairs.map(function(x) { return x.v; }).sort(function(a, b) { return a - b; });
+  const out = { budget: budget, n: values.length, of: base.length, values: values, warnings: [], weighted: Boolean(weights) };
   out.level = values.length >= 5 ? 'median' : values.length >= 3 ? 'single' : 'none';
   if (out.level === 'median') {
-    out.median = intelMedian(values);
+    out.median = out.weighted ? intelWeightedMedian(pairs) : intelMedian(values);
     out.min = values[0];
     out.max = values[values.length - 1];
   }
@@ -4995,13 +5232,15 @@ function plannerExpectation(objects, daily, days) {
 }
 
 // Cumulative leads day by day at a fixed daily budget, as long as 5 own properties reached that spend
-function plannerCurve(objects, daily, days) {
+function plannerCurve(objects, daily, days, plannedInput) {
   const base = forecastBase(objects);
+  const weights = plannerWeights(base, plannedInput);
   const out = [];
   for (let d = 1; d <= days; d++) {
-    const v = base.map(function(o) { return leadsAtSpend(o.series, daily * d); }).filter(function(x) { return x !== null; });
+    const pairs = base.map(function(o, i) { return { v: leadsAtSpend(o.series, daily * d), w: weights ? weights[i] : 1 }; }).filter(function(x) { return x.v !== null; });
+    const v = pairs.map(function(x) { return x.v; });
     if (v.length < 5) break;
-    out.push({ day: d, median: intelMedian(v), lo: Math.min.apply(null, v), hi: Math.max.apply(null, v), n: v.length });
+    out.push({ day: d, median: weights ? intelWeightedMedian(pairs) : intelMedian(v), lo: Math.min.apply(null, v), hi: Math.max.apply(null, v), n: v.length });
   }
   return out;
 }
@@ -5681,6 +5920,10 @@ function featureCorrelations(objects) {
 // filters of the report do not apply. Built on first open, restored to pristine markup on logout.
 let _intelLoaded = false;
 let _predictionLoaded = false;
+// Details of the last calculated forecast: the planner and its chart use these, not fields that
+// were typed but not yet calculated, so both halves of the result stand on the same input
+let _predInput = null;
+let _resultGrid = null; // dot field of the forecast card
 let _intelCache = null;
 let intelCharts = Object.create(null); // canvas id -> chart
 let corrSelected = 'price';
@@ -5722,7 +5965,10 @@ function intelCampaignRows() {
       Object.keys(t).forEach(function(k) { spend[k] = (spend[k] || 0) + t[k]; });
     });
     const censored = row.flights.some(function(f) { return f.fWindow && f.fWindow.rolling && f.fDates[0] && f.fDates[0] <= f.fWindow.since; });
-    return { id: row.program.id, name: programDisplayName(row.program), kind: programKind(row.program), completed: row.status === 'completed',
+    // same rule as for objects: paused campaigns count as completed after 7 days without delivery
+    const last = row.flights.reduce(function(max, f) { const d = f.fDates[f.fDates.length - 1] || ''; return d > max ? d : max; }, '');
+    const completed = intelSettled(row.flights.map(campaignStatus), last, lastDataDay());
+    return { id: row.program.id, name: programDisplayName(row.program), kind: programKind(row.program), completed: completed,
       censored: censored, spend: row.cplSpend, leads: row.leads, typeSpend: spend };
   });
 }
@@ -5730,6 +5976,9 @@ function intelCampaignRows() {
 function destroyIntelCharts() {
   Object.keys(intelCharts).forEach(function(id) { intelCharts[id].destroy(); });
   intelCharts = Object.create(null);
+  // the forecast's dot field and its details belong to the session too
+  releaseResultGrid();
+  _predInput = null;
 }
 
 // Every finding on this tab stands on at least 12 units (INTEL.minUnits) and then carries one of
@@ -5877,6 +6126,14 @@ function qualityHTML(data, waiting, wholeCampaigns) {
     const parts = [running ? plural(running, 'Objekt läuft', 'Objekte laufen') + ' noch' : '', paused ? plural(paused, 'Objekt ist', 'Objekte sind') + ' pausiert' : ''].filter(Boolean);
     items.push(parts.join(', ') + '. Bei ' + (running && paused ? 'laufenden und pausierten' : running ? 'laufenden' : 'pausierten') +
       ' Objekten fehlen die letzten 7 Tage, weil Meta Leads bis zu 7 Tage nachträgt.');
+  }
+  // paused in Meta but completed for these analyses: named with their last delivery day, since the
+  // reporting still shows them as paused
+  const pausedDone = O.filter(function(o) { return o.pausedDone; });
+  if (pausedDone.length) {
+    const named = joinNames(pausedDone.map(function(o) { return o.name + (o.lastSpend ? ' (zuletzt am ' + formatDateShort(o.lastSpend) + ')' : ''); }));
+    items.push(named + (pausedDone.length === 1 ? ' ist in Meta pausiert und zählt als abgeschlossen, weil es seit mindestens 7 Tagen nichts mehr ausgeliefert hat.'
+      : ' sind in Meta pausiert und zählen als abgeschlossen, weil sie seit mindestens 7 Tagen nichts mehr ausgeliefert haben.'));
   }
   if (q.censored.length) items.push(plural(q.censored.length, 'Objekt fehlt', 'Objekte fehlen') + ': Das geteilte Werbekonto liefert nur ein 30-Tage-Fenster, die ersten Tage sind nicht enthalten.');
   if (!leadRule && q.nonLeadgen) items.push(plural(q.nonLeadgen, 'Phase hat', 'Phasen haben') + ' ein anderes Kampagnenziel als Leads und ' + (q.nonLeadgen === 1 ? 'zählt' : 'zählen') + ' nicht mit.');
@@ -6380,9 +6637,57 @@ function allocationHTML(alloc) {
 
 // ---------- prediction engine ----------
 
-function renderPrediction() {
+// dot field of the result card; a new forecast releases it before its markup goes
+function releaseResultGrid() {
+  if (_resultGrid && _resultGrid.destroy) _resultGrid.destroy();
+  _resultGrid = null;
+}
+
+// The planned property from the form; empty fields stay out of the forecast
+function predictionInput() {
+  const val = function(id) { const el = document.getElementById(id); return el ? el.value : ''; };
+  return intelPlanned({ type: val('pred-type'), city: val('pred-city'), price: val('pred-price'), size: val('pred-size') });
+}
+
+// "A, B und C"
+function joinNames(names) {
+  return names.length > 1 ? names.slice(0, -1).join(', ') + ' und ' + names[names.length - 1] : names.join('');
+}
+
+// What the object details did: which properties count most (only those that really count more),
+// or that the details fit all about equally, or that none were given
+function weightNoteHTML(f) {
+  if (!f.weighted) {
+    return f.active ? '<li>Keines Ihrer bisherigen Objekte ähnelt Ihren Angaben mehr als die anderen, deshalb zählen alle gleich.</li>'
+      : '<li>Alle Objekte zählen gleich. Mit Angaben zum Objekt zählen ähnliche stärker.</li>';
+  }
+  const leaders = f.leaders || [];
+  // more than 5 equally similar: counted, by their town when they share one
+  const towns = Array.from(new Set(leaders.map(function(r) { return r.property && r.property.city ? String(r.property.city) : ''; })));
+  const most = leaders.length && leaders.length <= 5 ? ', am meisten ' + joinNames(leaders.map(function(r) { return r.name; }))
+    : leaders.length ? ', am meisten die ' + formatNum(leaders.length) + ' Objekte ' + (towns.length === 1 && towns[0] ? 'in ' + towns[0] : 'oben in den Vergleichsobjekten') : '';
+  const plain = formatEUR(f.unweighted);
+  return '<li>' + escHtml('Ähnliche Objekte zählen stärker' + most + '. Ohne Ihre Angaben läge die Schätzung ' +
+    (plain === formatEUR(f.point) ? 'ebenfalls bei ' : 'bei ') + plain + '.') + '</li>';
+}
+
+// fromButton: the "Prognose berechnen" button (or Enter) asked for it; on phones the result is then
+// scrolled into view, since it sits below the form
+function renderPrediction(fromButton) {
   const box = document.getElementById('pred-results');
-  const f = cplForecast(intelData().objects);
+  const input = predictionInput();
+  const f = cplForecast(intelData().objects, input);
+  // without a forecast (fewer than 4 properties) the details cannot weigh anything: fields off, said plainly
+  _predInput = f.point ? input : intelPlanned({});
+  ['pred-type', 'pred-city', 'pred-price', 'pred-size'].forEach(function(id) { const el = document.getElementById(id); if (el) el.disabled = !f.point; });
+  setText('pred-note', f.point ? 'Ähnliche eigene Objekte zählen stärker. Leere Felder bleiben unberücksichtigt.'
+    : 'Objektangaben wirken ab 4 eigenen abgeschlossenen Objekten mit mindestens 20 Leads.');
+  const cities = document.getElementById('pred-cities');
+  if (cities && !cities.options.length) {
+    // own towns as suggestions, the way the properties name them
+    const seen = new Set();
+    intelData().objects.forEach(function(o) { const c = o.property && o.property.city; if (c && !seen.has(c)) { seen.add(c); cities.appendChild(new Option(c)); } });
+  }
   const daily = document.getElementById('pred-daily'), days = document.getElementById('pred-days');
   if (f.n) {
     if (!daily.value) daily.value = Math.round(f.typicalDaily);
@@ -6409,11 +6714,16 @@ function renderPrediction() {
       '<div class="huge" style="margin-bottom:4px">' + formatEUR(f.point) + '</div>' +
       '<div class="huge-sub" style="margin-bottom:0">Mit 80 % Wahrscheinlichkeit zwischen ' + eurBetween(f.lo, f.hi) + '.</div>' +
       '<div class="strip"><span class="band" style="left:' + pos(f.lo) + ';width:calc(' + pos(f.hi) + ' - ' + pos(f.lo) + ')"></span>' +
-      values.map(function(v) { return '<span class="own" style="left:' + pos(v) + '"></span>'; }).join('') + '<span class="pt" style="left:' + pos(f.point) + '"></span></div>' +
+      f.rows.map(function(r) {
+        // weight shows as strength: the most similar properties stand out
+        const top = Math.max.apply(null, f.rows.map(function(x) { return x.weight; }));
+        return '<span class="own" style="left:' + pos(r.cpl) + ';opacity:' + (f.weighted ? (0.25 + 0.75 * r.weight / top).toFixed(2) : '1') + '"></span>';
+      }).join('') + '<span class="pt" style="left:' + pos(f.point) + '"></span></div>' +
       '<div class="range-scale">' + ticks.join('') + '</div>' +
       '<ul class="pred-notes"><li>Punkte: Ihre bisherigen Objekte. Bei üblicher Laufzeit wie bisher (' + formatNum(f.days[0]) + ' bis ' + formatNum(f.days[1]) + ' Liefertage, ' +
       formatNum(Math.round(f.spend[0] / 10) * 10) + ' bis ' + formatEUR(Math.round(f.spend[1] / 10) * 10) + ').</li>' +
-      '<li>Preis, Objektart und Lage verändern diese Zahl bisher nicht messbar.</li>' +
+      weightNoteHTML(f) +
+      '<li>Treffsicherheit bisher: Jedes Objekt aus den übrigen geschätzt, lag die Schätzung im Mittel ' + pctText(f.accuracy * 100, 0) + ' daneben.</li>' +
       (f.wide ? '<li>Ihre Objekte schwanken stark, die Spanne ist deshalb breit.</li>' : '') + websiteNote + '</ul>';
   } else {
     main = '<div class="lbl"><span class="tile g-red" data-i="target"></span>' + title + '</div>' +
@@ -6421,23 +6731,35 @@ function renderPrediction() {
       '<div class="huge-sub">Für eine Prognose braucht es mindestens 4 eigene abgeschlossene Objekte mit mindestens 20 Leads' + (f.n ? ', bisher ' + plural(f.n, 'Objekt', 'Objekte') : '') + '.</div>' +
       (f.n || websiteNote ? '<ul class="pred-notes">' + (f.n ? '<li>Bisherige Werte: ' + f.rows.map(function(r) { return formatEUR(r.cpl); }).join(', ') + ' pro Lead.</li>' : '') + websiteNote + '</ul>' : '');
   }
-  const sims = f.rows.map(function(r) {
-    // lead rule: the forecast stands on Formular leads only, so its objects say so (as in Data Intelligence)
+  const listed = f.weighted ? f.rows.slice().sort(function(a, b) { return b.weight - a.weight; }) : f.rows;
+  const sims = listed.map(function(r) {
+    // lead rule: the forecast stands on Formular leads only, so its objects say so (as in Data Intelligence);
+    // a property paused in Meta that counts as completed says so too
     return '<div class="sim">' + intelThumb(r) + '<div class="nm"><b>' + escHtml(r.name) + '</b><span>' + escHtml(intelPlace(r)) + ' · ' +
-      (leadRule ? plural(r.leads, 'Formular-Lead', 'Formular-Leads') : plural(r.leads, 'Lead', 'Leads')) + '</span></div>' +
-      '<span class="r"><b>' + formatEUR(r.cpl) + '</b><small>' + (f.point ? 'Gewicht ' + pctText(f.weight * 100, 0) : '') + '</small></span></div>';
+      (leadRule ? plural(r.leads, 'Formular-Lead', 'Formular-Leads') : plural(r.leads, 'Lead', 'Leads')) + (r.pausedDone ? ' · in Meta pausiert' : '') + '</span></div>' +
+      '<span class="r"><b>' + formatEUR(r.cpl) + '</b><small>' + (f.point ? 'Gewicht ' + pctText(r.weight * 100, 0) : '') + '</small></span></div>';
   }).join('');
+  // a new run replaces the result markup, so the old chart and dot field go with their canvases
+  if (intelCharts.predChart) { intelCharts.predChart.destroy(); delete intelCharts.predChart; }
+  releaseResultGrid();
   box.innerHTML = '<div class="card result"><div class="result-fx" id="result-fx" aria-hidden="true"></div><div class="result-in"><div>' + main + '</div><div class="side-stats">' + basis + plan + '</div></div></div>' +
     '<div class="note" id="predPlanWarn" hidden></div>' +
     '<div class="card pad" style="margin-top:14px"><div class="card-h"><div><h3>Leads im Verlauf</h3><p id="predChartSub">So lief es bei Ihren Objekten mit diesem Budget</p></div></div>' +
     '<div class="chart h200"><canvas id="predChart"></canvas></div><div class="empty-line" id="predChartEmpty" hidden>Für den Verlauf braucht es 5 eigene Objekte, die dieses Budget erreicht haben.</div>' +
     '<div class="card-foot" id="predChartFoot" hidden></div></div>' +
-    '<div class="card pad" style="margin-top:14px"><div class="card-h"><div><h3>Vergleichsobjekte</h3><p>' + (f.point ? 'Alle zählen gleich, weil bisher kein Merkmal die Prognose messbar verbessert' : 'Ihre bisherigen Objekte') + '</p></div></div>' +
+    '<div class="card pad" style="margin-top:14px"><div class="card-h"><div><h3>Vergleichsobjekte</h3><p>' + (!f.point ? 'Ihre bisherigen Objekte' : f.weighted ? 'Gewicht nach Ähnlichkeit zu Ihren Angaben'
+      : f.active ? 'Alle zählen gleich, keines ähnelt Ihren Angaben mehr als die anderen' : 'Alle zählen gleich, solange keine Objektangaben gemacht sind') + '</p></div></div>' +
     (sims || '<div class="empty-line">Noch keine abgeschlossenen Objekte mit mindestens 20 Leads.</div>') + '</div>';
   applyIcons(box);
   updatePlanner();
   setupReveal(document.getElementById('tab-predictor'));
-  DotGrid(document.getElementById('result-fx'), { dotSize: 1.8, gap: 18, baseColor: '#F2DCD8', activeColor: '#E7352E', opacity: .7, proximity: 100, strength: .3, bounce: .35, tension: .25, swell: .35, stretch: .15, glow: .15, fade: .4, clickShock: false, intro: false });
+  if (fromButton && window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
+    // below the sticky top bar, so the new number is the first thing in view
+    const bar = document.querySelector('.top');
+    const top = box.getBoundingClientRect().top + window.scrollY - (bar ? bar.getBoundingClientRect().height : 0) - 12;
+    window.scrollTo({ top: Math.max(0, top), behavior: REDUCED ? 'auto' : 'smooth' });
+  }
+  _resultGrid = DotGrid(document.getElementById('result-fx'), { dotSize: 1.8, gap: 18, baseColor: '#F2DCD8', activeColor: '#E7352E', opacity: .7, proximity: 100, strength: .3, bounce: .35, tension: .25, swell: .35, stretch: .15, glow: .15, fade: .4, clickShock: false, intro: false });
 }
 
 function plannerInputs() {
@@ -6455,11 +6777,15 @@ function updatePlanner() {
     warn.hidden = true;
     return;
   }
-  const p = plannerExpectation(O, inp.daily, inp.days);
+  // the object details of the last calculated forecast, never fields typed since
+  const planned = _predInput || intelPlanned({});
+  const p = plannerExpectation(O, inp.daily, inp.days, planned);
   const budget = formatEUR(Math.round(p.budget)) + ' (' + formatEUR(inp.daily) + ' × ' + plural(inp.days, 'Tag', 'Tage') + ')';
   if (p.level === 'median') {
     swapText('predPlanLeads', '≈ ' + formatMedian(p.median));
-    setText('predPlanSub', formatNum(p.min) + ' bis ' + formatNum(p.max) + ' Leads bei ' + budget + ', so lief es bei ' + plural(p.n, 'Objekt', 'Objekten') + ' · rund ' + formatEUR(p.budget / p.median) + ' pro Lead');
+    // a median of 0 leads has no cost per lead
+    setText('predPlanSub', formatNum(p.min) + ' bis ' + formatNum(p.max) + ' Leads bei ' + budget + ', so lief es bei ' + plural(p.n, 'Objekt', 'Objekten') + (p.weighted ? ', ähnliche zählen stärker' : '') +
+      (p.median > 0 ? ' · rund ' + formatEUR(p.budget / p.median) + ' pro Lead' : ''));
   } else if (p.level === 'single') {
     swapText('predPlanLeads', p.values.map(formatNum).join(', '));
     setText('predPlanSub', 'Einzelwerte von ' + plural(p.n, 'Objekt', 'Objekten') + ' bei ' + budget);
@@ -6474,7 +6800,7 @@ function updatePlanner() {
   });
   warn.hidden = !notes.length;
   warn.textContent = notes.length ? 'Rechnung außerhalb des beobachteten Bereichs: ' + notes.join(' ') : '';
-  const curve = plannerCurve(O, inp.daily, inp.days);
+  const curve = plannerCurve(O, inp.daily, inp.days, planned);
   const canvas = document.getElementById('predChart');
   const empty = curve.length < 2;
   canvas.parentNode.hidden = empty;
@@ -6486,7 +6812,7 @@ function updatePlanner() {
       '<span>' + escHtml('Spanne ' + formatNum(end.lo) + ' bis ' + formatNum(end.hi) + ' · ' + plural(end.n, 'Objekt', 'Objekte') + ' · ' + formatEUR(Math.round(inp.daily * end.day)) + ' Budget' +
       (end.day < inp.days ? ' · für mehr Tage haben weniger als 5 Objekte dieses Budget erreicht' : '')) + '</span>';
   }
-  setText('predChartSub', 'Leads kumuliert bei ' + formatEUR(inp.daily) + ' pro Tag, Median und Spanne Ihrer Objekte');
+  setText('predChartSub', 'Leads kumuliert bei ' + formatEUR(inp.daily) + ' pro Tag, ' + (p.weighted && !empty ? 'Median (ähnliche Objekte zählen stärker)' : 'Median') + ' und Spanne Ihrer Objekte');
   if (empty) return;
   const labels = curve.map(function(c) { return 'Tag ' + c.day; });
   const sets = [curve.map(function(c) { return c.hi; }), curve.map(function(c) { return c.lo; }), curve.map(function(c) { return c.median; })];
