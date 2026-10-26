@@ -164,6 +164,18 @@
     .info-btn:focus-visible { outline: 2px solid rgba(231,53,46,.45); outline-offset: 2px; }
     .info-pop { position: absolute; left: 12px; top: 52px; z-index: 8; width: min(320px, calc(100vw - 40px)); padding: 12px 14px 13px; border-radius: 12px; background: #fff; border: 1px solid rgba(60,20,15,.09); box-shadow: 0 10px 30px rgba(60,20,15,.10), 0 2px 6px rgba(60,20,15,.05); color: var(--ink-2); font-size: 12.5px; line-height: 1.5; font-weight: 400; opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .18s ease, transform .26s var(--ease), visibility 0s linear .26s; }
     .info-pop.on { opacity: 1; visibility: visible; transform: none; transition: opacity .18s ease, transform .26s var(--ease); }
+    /* info next to a headline (infoTipHTML): the explanation shows on hover, focus or tap */
+    .sec-t { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+    .tipw { position: relative; display: inline-flex; flex: none; }
+    .tip-btn { width: 20px; height: 20px; flex: none; border: 0; border-radius: 50%; padding: 0; display: grid; place-items: center; background: #fff; box-shadow: inset 0 0 0 1px rgba(60,20,15,.13); color: var(--muted); cursor: pointer; transition: box-shadow .2s var(--ease), color .2s var(--ease); }
+    .card .tip-btn { background: var(--fill); box-shadow: none; }
+    .tip-btn svg { display: block; width: 16px; height: 16px; fill: currentColor; }
+    .tip-btn:hover, .tip-btn[aria-expanded="true"] { color: var(--ink); box-shadow: inset 0 0 0 1px rgba(60,20,15,.28); }
+    .tip-btn:focus-visible { outline: 2px solid rgba(231,53,46,.45); outline-offset: 2px; }
+    /* closed, the info hangs to the left of its button, so it never widens the page on phones;
+       opened, the script places it inside the window */
+    .tip-pop { top: calc(100% + 10px); left: auto; right: 0; letter-spacing: -.006em; text-align: left; white-space: normal; }
+    .tip-open { position: relative; z-index: 30; }
     .info-pop p { margin: 0; }
     .info-pop p + p { margin-top: 6px; }
     .info-pop b { display: block; color: var(--ink); font-weight: 600; margin: 8px 0 2px; padding-top: 8px; border-top: 1px solid var(--hair); }
@@ -242,10 +254,9 @@
     .cr .ph { aspect-ratio: 16/9; max-height: 150px; width: 100%; }
     .fmt { position: absolute; left: 12px; top: 12px; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: rgba(255,255,255,.94); font-size: 12px; font-weight: 600; color: var(--ink); }
     .fmt .i { width: 15px; height: 15px; }
-    .rank { position: absolute; right: 12px; top: 12px; width: 26px; height: 26px; border-radius: 50%; background: rgba(29,20,20,.82); color: #fff; font-size: 12.5px; font-weight: 600; display: grid; place-items: center; }
     .cr-b { padding: 14px 16px 16px; }
     .cr-b .cp { color: var(--muted); font-size: 12.5px; }
-    .cr-m { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 10px; }
+    .cr-m { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 8px; margin-top: 10px; }
     .cr-m b { font: 700 19px/1.2 var(--display); letter-spacing: -.016em; color: var(--ink); }
     .cr-m span { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
     .cr .track { margin-top: 12px; }
@@ -436,26 +447,30 @@
     .ov-plot .raw { position: absolute; top: 50%; width: 2px; height: 14px; margin: -7px 0 0 -1px; border-radius: 1px; background: rgba(31,26,26,.5); }
     .ov-v b { display: block; font-weight: 650; font-size: 15px; }
     .ov-v small { display: block; color: var(--muted); font-size: 12px; }
-    .fr { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) 196px; gap: 20px; align-items: center; padding: 13px 0; border-top: 1px solid var(--hair); transition: opacity .25s var(--ease); }
-    .fr.head { border-top: 0; padding: 0 0 8px; color: var(--muted); font-size: 12px; }
-    .forest:hover .fr:not(.head):not(:hover) { opacity: .55; }
-    .fx { position: relative; height: 16px; }
-    .fx span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
-    .fx span:first-child { transform: none; } .fx span:last-child { transform: translateX(-100%); }
-    .fplot { position: relative; height: 26px; }
-    .fplot::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--hair); }
-    .fplot .zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; border-radius: 1px; background: #D8CFCD; }
-    .fplot .ci { position: absolute; top: 50%; height: 6px; margin-top: -3px; border-radius: 3px; opacity: .35; transition: left .55s var(--ease), width .55s var(--ease); }
-    .fplot .dot { position: absolute; top: 50%; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; border-radius: 50%; box-shadow: 0 0 0 3px #fff, 0 2px 8px rgba(60,20,15,.22); transition: left .55s var(--ease), transform .25s var(--ease); }
-    .fr:hover .dot { transform: scale(1.18); }
-    .fv { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; text-align: right; }
-    .fv b { font-size: 16px; font-weight: 650; }
-    .fv small { color: var(--muted); font-size: 12px; }
-    .fr .nm span { white-space: normal; }
-    .forest-note { margin: 14px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
-    .xrow.th { grid-template-columns: 150px minmax(0, 1fr) 170px; }
-    .xrow.th-scale { border-top: 0; padding: 0 0 2px; align-items: start; }
-    .xrow.th-scale .xv small { margin-top: 0; }
+    .fc .card-h { align-items: baseline; }
+    .fc .gstats span { display: flex; align-items: center; gap: 7px; }
+    .mk { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+    .mk.a, .fc-strip .a .dot { background: var(--brand); }
+    .mk.b, .fc-strip .b .dot { background: var(--muted); }
+    .fc-strip .dot.sm { box-shadow: none; }
+    .fc-strip .a .dot.sm { background: #F6B4AE; }
+    .fc-strip .b .dot.sm { background: #D3CAC8; }
+    .fc-strip { margin-top: 16px; }
+    .fc-row { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; align-items: center; padding: 6px 0; }
+    .fc-row .lb { color: var(--ink-2); font-size: 13px; font-weight: 500; }
+    .fc-row:last-child { padding: 2px 0 0; }
+    .fc-row .xplot .dot:hover { transform: scale(1.25); }
+    .tg-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 11px 0; border-top: 1px solid var(--hair); }
+    .card-h + .tg-row { border-top: 0; padding-top: 0; }
+    .tg-row .nm b { display: block; font-weight: 600; font-size: 14px; }
+    /* medians, difference and stage share one baseline */
+    .tg-r { display: flex; align-items: baseline; gap: 18px; }
+    .tg-v { color: var(--muted); font-size: 13px; white-space: nowrap; }
+    .tg-v b { color: var(--ink); font-weight: 600; }
+    .tg-v em { font-style: normal; }
+    .tg-e { min-width: 64px; text-align: right; font-weight: 650; font-size: 15px; white-space: nowrap; }
+    .tg-e.muted { color: var(--ink-2); }
+    .tg-r .cert { min-width: 132px; justify-content: flex-end; align-items: baseline; }
     .wk { margin-top: 14px; }
     .wk > p { display: flex; align-items: baseline; gap: 12px; margin: 10px 0 0; color: var(--ink-2); font-size: 14px; line-height: 1.55; }
     .wk > .card-h + p { margin-top: 0; }
@@ -587,10 +602,14 @@
       .nm small.mix em { display: none; }
       .cpl span.way em { display: none; }
       .cx-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .fr { grid-template-columns: minmax(0, 1fr); row-gap: 10px; }
-      .fr > .fv { flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: flex-start; gap: 4px 10px; text-align: left; }
-      .fr.head > span { display: none; }
       .xv small { white-space: normal; }
+      /* phones: name and stage on the first line, the two medians and the difference below */
+      .tg-row { gap: 6px 12px; }
+      .tg-r { display: contents; }
+      .tg-row .nm { grid-column: 1; grid-row: 1; }
+      .tg-r .cert { grid-column: 2; grid-row: 1; min-width: 0; align-self: center; }
+      .tg-v { grid-column: 1; grid-row: 2; align-self: baseline; }
+      .tg-e { grid-column: 2; grid-row: 2; align-self: baseline; min-width: 0; }
       .ov-h, .ov-row { grid-template-columns: 40px minmax(0, 1fr) 84px; gap: 6px 12px; padding-left: 16px; padding-right: 16px; }
       .ov-h > span:first-child, .ov-h > .r { display: none; }
       .ov-h .sc { grid-column: 1 / -1; }
@@ -603,19 +622,14 @@
       .xrow.reg { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) 104px; }
       /* object names wrap on phones instead of losing their end ("Walther-von-Cronberg…") */
       .xrow.reg .nm1, .ov-row .nm b { white-space: normal; overflow-wrap: anywhere; }
-      .xrow.th { grid-template-columns: 84px minmax(0, 1fr) 112px; }
-      .th-scale .range-scale span:nth-child(even) { display: none; }
       .wk > p { flex-direction: column; gap: 4px; }
       .result-in { padding: 20px; gap: 18px; }
       .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
       .seg::-webkit-scrollbar { display: none; }
     }
     @media (max-width: 560px) {
-      /* two creative cards side by side: the rank moves to the lower corner of the picture,
-         so the format label keeps its width, and "pro Lead" may take its own line */
-      .cr .rank { top: auto; bottom: 10px; right: 10px; }
+      /* two creative cards side by side: the format label keeps its width, and "des Budgets" may take its own line */
       .cr .fmt { left: 10px; top: 10px; max-width: calc(100% - 20px); overflow: hidden; white-space: nowrap; }
-      .cr-m { flex-wrap: wrap; row-gap: 2px; }
     }
     @media (max-width: 374px) {
       .title-row .seg.many button i { display: none; }
@@ -738,9 +752,8 @@
       <div class="card list" id="campaignTableBody"></div>
 
       <div id="mainCreativeSection" hidden>
-        <div class="sec-h base"><h2>Werbemittel</h2><span class="sec-note" id="creativeNote"></span></div>
+        <div class="sec-h base"><div class="sec-t"><h2>Werbemittel</h2><span class="tipw"><button type="button" class="tip-btn" aria-label="So lesen Sie die Werbemittel" aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="4.6" r="1.15"/><rect x="7.1" y="6.8" width="1.8" height="5.4" rx=".9"/></svg></button><span class="info-pop tip-pop" role="tooltip"><p>Meta verteilt das Budget selbst auf die Anzeigen einer Kampagne. Ob sich ein Format lohnt, zeigt der Kampagnenvergleich unter Data Intelligence.</p></span></span></div><span class="sec-note" id="creativeNote"></span></div>
         <div class="creatives" id="mainCreativeRanking"></div>
-        <p class="sec-foot" id="creativeFoot" hidden></p>
       </div>
 
       <div id="globalAudienceInsights" hidden>
@@ -843,9 +856,8 @@
         <div class="legend" id="detailLegend" hidden></div>
       </div>
       <div id="creativeSection" hidden>
-        <div class="sec-h base" style="margin-top:28px"><h3>Werbemittel</h3><span class="sec-note" id="detailCreativeNote"></span></div>
+        <div class="sec-h base" style="margin-top:28px"><div class="sec-t"><h3>Werbemittel</h3><span class="tipw"><button type="button" class="tip-btn" aria-label="So lesen Sie die Werbemittel" aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="4.6" r="1.15"/><rect x="7.1" y="6.8" width="1.8" height="5.4" rx=".9"/></svg></button><span class="info-pop tip-pop" role="tooltip"><p>Meta verteilt das Budget selbst auf die Anzeigen einer Kampagne. Ob sich ein Format lohnt, zeigt der Kampagnenvergleich unter Data Intelligence.</p></span></span></div><span class="sec-note" id="detailCreativeNote"></span></div>
         <div class="creatives c3" id="creativeRanking"></div>
-        <p class="sec-foot" id="detailCreativeFoot" hidden></p>
       </div>
       <div id="detailAudienceWrapper" hidden>
         <div class="sec-h base" style="margin-top:28px"><h3>Zielgruppe</h3><span class="sec-note" id="detailAudienceNote">gesamte Laufzeit</span></div>
@@ -2509,78 +2521,25 @@ function setText(id, text) {
 }
 
 // ============================================
-// CREATIVE SCORE
+// CREATIVE FORMATS
 // ============================================
-function scoreCreativeTypes(typeMap) {
-  const entries = Object.entries(typeMap).map(([type, data]) => ({
-    type,
-    ...data,
-    cpl: data.leads > 0 ? data.cplSpend / data.leads : Infinity,
-    // null when no click of this type was measured; never a false 0
-    ctr: data.clickImpressions > 0 ? (data.clicks / data.clickImpressions) * 100 : null
-  }));
-
-  // Only score types with leads
-  const withLeads = entries.filter(e => e.leads > 0);
-  const withoutLeads = entries.filter(e => e.leads === 0);
-
-  if (withLeads.length === 0) return entries.map(e => ({ ...e, score: 0 }));
-
-  // Normalize CPL (inverse — lower is better)
-  const maxCPL = Math.max(...withLeads.map(e => e.cpl));
-  const minCPL = Math.min(...withLeads.map(e => e.cpl));
-  const cplRange = maxCPL - minCPL || 1;
-
-  // Normalize leads (higher is better)
-  const maxLeads = Math.max(...withLeads.map(e => e.leads));
-  const minLeads = Math.min(...withLeads.map(e => e.leads));
-  const leadsRange = maxLeads - minLeads || 1;
-
-  // Normalize CTR (higher is better); types without measured clicks score neutral
-  const withCTR = withLeads.filter(e => e.ctr !== null);
-  const maxCTR = withCTR.length ? Math.max(...withCTR.map(e => e.ctr)) : 0;
-  const minCTR = withCTR.length ? Math.min(...withCTR.map(e => e.ctr)) : 0;
-  const ctrRange = maxCTR - minCTR || 1;
-
-  withLeads.forEach(e => {
-    const cplScore = withLeads.length === 1 ? 80 : ((maxCPL - e.cpl) / cplRange) * 100;
-    const leadsScore = withLeads.length === 1 ? 80 : ((e.leads - minLeads) / leadsRange) * 100;
-    const ctrScore = withLeads.length === 1 ? 80
-      : (e.ctr === null || withCTR.length < 2) ? 50 : ((e.ctr - minCTR) / ctrRange) * 100;
-    e.score = Math.round(cplScore * 0.5 + leadsScore * 0.35 + ctrScore * 0.15);
+// Formats in view with their ads, budget and leads, ordered by their share of the budget. No rank,
+// score or cost per lead per format: Meta distributes the budget across the ads itself, and a lead
+// gets dearer as the budget grows, so a format's own cost per lead says little about whether it pays
+// off (Oskar, 26.10.2026). Whether it does is the campaign comparison in Data Intelligence.
+function creativeFormatList(typeMap) {
+  const total = Object.keys(typeMap).reduce(function(s, type) { return s + (typeMap[type].spend || 0); }, 0);
+  return Object.keys(typeMap).map(function(type) {
+    return Object.assign({ type: type }, typeMap[type], { share: total > 0 ? (typeMap[type].spend || 0) / total : 0 });
+  }).filter(function(t) { return t.spend > 0 || t.leads > 0; }).sort(function(a, b) {
+    return b.spend - a.spend || b.leads - a.leads || (a.type < b.type ? -1 : a.type > b.type ? 1 : 0);
   });
-
-  // Types without leads get score 0
-  withoutLeads.forEach(e => { e.score = 0; });
-
-  // Sort by score descending
-  const all = [...withLeads, ...withoutLeads];
-  all.sort((a, b) => b.score - a.score);
-  return all;
 }
 
-// Order of the format cards. Types with a cost per lead (20 leads) are ranked by the score above
-// among themselves; a type under 20 leads has no cost to compare, so it follows by its leads and
-// never moves ahead on the cost of a handful of leads. The foot under the cards names the order.
-function rankCreativeTypes(typeMap) {
-  const scoredMap = Object.create(null), rest = [];
-  Object.keys(typeMap).forEach(function(type) {
-    if (typeMap[type].leads >= MIN_SUBSET_LEADS) scoredMap[type] = typeMap[type];
-    else rest.push(Object.assign({ type: type }, typeMap[type], { score: 0 }));
-  });
-  rest.sort(function(a, b) { return b.leads - a.leads || (a.type < b.type ? -1 : a.type > b.type ? 1 : 0); });
-  return scoreCreativeTypes(scoredMap).concat(rest);
-}
-
-// "Reihenfolge …" under the cards; with at most one type of 20 leads the order is the lead count
-function creativeOrderText(ranked) {
-  const shown = ranked.filter(function(t) { return t.leads > 0; });
-  if (shown.length < 2) return '';
-  const scored = shown.filter(function(t) { return t.leads >= MIN_SUBSET_LEADS; });
-  if (scored.length < 2) return 'Reihenfolge nach Leads.';
-  const clicks = scored.filter(function(t) { return t.ctr !== null && t.ctr !== undefined; }).length >= 2;
-  return 'Reihenfolge nach einer Wertung aus Kosten pro Lead' + (clicks ? ', Leads und Klickrate' : ' und Leads') +
-    (scored.length < shown.length ? '; Werbemittel unter ' + MIN_SUBSET_LEADS + ' Leads folgen nach Leads.' : '.');
+// "41 %"; a sliver reads "unter 1 %", and nearly all "über 99 %", so the cards never add up past 100
+function budgetShareText(share) {
+  return share > 0 && share < 0.005 ? 'unter 1\u00a0%' : share > 0.995 && share < 1 ? 'über 99\u00a0%'
+    : formatDecimal(Math.round(share * 100), 0) + '\u00a0%';
 }
 
 // Note above the cards: which leads they cover and, as creative rows can miss whole phases, the
@@ -2610,21 +2569,19 @@ const FORMAT_ICONS = Object.freeze(Object.assign(Object.create(null), {
   reel: 'play', th_reel: 'play', scn_reel: 'play', video: 'play'
 }));
 
-// Cards for creative types, best first. Creative rows carry no day, so they always cover the whole runtime.
-function creativeCardsHTML(scored, kind, seed) {
-  const withLeads = scored.filter(function(t) { return t.leads > 0; });
-  const maxLeads = Math.max.apply(null, withLeads.map(function(t) { return t.leads; }).concat([1]));
-  return withLeads.map(function(t, index) {
+// One card per format: ads, share of the budget, leads; the bar is the share of the budget.
+// Creative rows carry no day, so they always cover the whole runtime.
+function creativeCardsHTML(list, kind, seed) {
+  return list.map(function(t) {
     const key = String(t.type || '').toLowerCase();
     const icon = Object.prototype.hasOwnProperty.call(FORMAT_ICONS, key) ? FORMAT_ICONS[key] : 'image';
-    const cpl = costPerLead(t.cplSpend, t.leads, true);
     // lead rule: the way of the leads where creative rows carry it and some came over the website
     const via = t.split && t.website > 0 ? ' · ' + splitText(t) : '';
     return '<div class="card cr">' + artHTML(kind, null, seed + key, '', icon).replace('</div></div>',
-        '</div><span class="fmt">' + I(icon) + escHtml(formatCreativeType(t.type)) + '</span><span class="rank">' + (index + 1) + '</span></div>') +
+        '</div><span class="fmt">' + I(icon) + escHtml(formatCreativeType(t.type)) + '</span></div>') +
       '<div class="cr-b"><div class="cp">' + formatNum(t.count) + (t.count === 1 ? ' Anzeige' : ' Anzeigen') + escHtml(via) + '</div>' +
-      '<div class="cr-m"><span><b>' + formatNum(t.leads) + '</b>' + (t.leads === 1 ? ' Lead' : ' Leads') + '</span><span>' + (cpl !== null ? '<b style="font-size:15px">' + formatEUR(cpl) + '</b> pro Lead' : 'unter ' + MIN_SUBSET_LEADS + ' Leads') + '</span></div>' +
-      '<span class="track"><i data-w="' + (t.leads / maxLeads * 100) + '%" style="width:0;background:' + kindStyle(kind).color + '"></i></span></div></div>';
+      '<div class="cr-m"><span><b>' + budgetShareText(t.share) + '</b> des Budgets</span><span><b style="font-size:15px">' + formatNum(t.leads) + '</b>' + (t.leads === 1 ? ' Lead' : ' Leads') + '</span></div>' +
+      '<span class="track"><i data-w="' + (t.share * 100).toFixed(1) + '%" style="width:0;background:' + kindStyle(kind).color + '"></i></span></div></div>';
   }).join('');
 }
 
@@ -2834,6 +2791,70 @@ document.addEventListener('click', function(e) {
   const button = document.getElementById('kpiLeadsInfo'), pop = document.getElementById('kpiLeadsPop');
   if (button && button.$pinned && pop && !pop.contains(e.target)) button.$close();
 });
+
+// Small "i" next to a headline: the explanation behind it shows on hover, focus or tap instead of
+// standing as text under the headline. One open at a time; a tap elsewhere or Escape closes it.
+const INFO_GLYPH = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="4.6" r="1.15"/><rect x="7.1" y="6.8" width="1.8" height="5.4" rx=".9"/></svg>';
+function infoTipHTML(label, html) {
+  return '<span class="tipw"><button type="button" class="tip-btn" aria-label="' + escHtml(label).replace(/"/g, '&quot;') + '" aria-expanded="false">' + INFO_GLYPH + '</button>' +
+    '<span class="info-pop tip-pop" role="tooltip">' + html + '</span></span>';
+}
+let _tipOpen = null;
+function tipShow(wrap, on) {
+  const btn = wrap.querySelector('.tip-btn'), pop = wrap.querySelector('.tip-pop');
+  if (!btn || !pop) return;
+  if (on && _tipOpen && _tipOpen !== wrap) tipShow(_tipOpen, false);
+  if (!on) wrap.$pinned = false;
+  btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+  // the headline or card lifts above the cards that follow while its info is open
+  const host = wrap.closest('.sec-h, .card');
+  if (host) host.classList.toggle('tip-open', on);
+  if (on) {
+    // inside the window (or the sheet), 16 px from either edge
+    clearTimeout(wrap.$reset);
+    pop.style.left = '';
+    const r = wrap.getBoundingClientRect(), sheet = wrap.closest('.sheet');
+    const box = sheet ? sheet.getBoundingClientRect() : { left: 0, right: document.documentElement.clientWidth };
+    const w = pop.offsetWidth;
+    let left = -10;
+    if (r.left + left + w > box.right - 16) left = box.right - 16 - w - r.left;
+    if (r.left + left < box.left + 16) left = box.left + 16 - r.left;
+    pop.style.left = Math.round(left) + 'px';
+  }
+  pop.classList.toggle('on', on);
+  // back to its closed place once it has faded out
+  if (!on) { clearTimeout(wrap.$reset); wrap.$reset = setTimeout(function() { if (!pop.classList.contains('on')) pop.style.left = ''; }, 320); }
+  if (on) _tipOpen = wrap; else if (_tipOpen === wrap) _tipOpen = null;
+}
+document.addEventListener('mouseover', function(e) {
+  const wrap = e.target.closest && e.target.closest('.tipw');
+  if (wrap && !wrap.contains(e.relatedTarget) && wrap !== _tipOpen) tipShow(wrap, true);
+});
+document.addEventListener('mouseout', function(e) {
+  const wrap = e.target.closest && e.target.closest('.tipw');
+  if (wrap && !wrap.$pinned && !wrap.contains(e.relatedTarget)) tipShow(wrap, false);
+});
+document.addEventListener('focusin', function(e) {
+  const wrap = e.target.closest && e.target.closest('.tipw');
+  if (wrap && wrap !== _tipOpen) tipShow(wrap, true);
+});
+document.addEventListener('focusout', function(e) {
+  const wrap = e.target.closest && e.target.closest('.tipw');
+  if (wrap && !wrap.contains(e.relatedTarget)) tipShow(wrap, false);
+});
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest && e.target.closest('.tip-btn');
+  if (btn) {
+    // a tap pins the info open, a second one closes it
+    const wrap = btn.parentNode;
+    const pin = !wrap.$pinned;
+    tipShow(wrap, pin);
+    wrap.$pinned = pin;
+    return;
+  }
+  if (_tipOpen && !_tipOpen.contains(e.target)) tipShow(_tipOpen, false);
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && _tipOpen) tipShow(_tipOpen, false); });
 
 // Notice after the switch (lead rule only). The portal stores nothing in the browser, so the notice
 // is bound to time: it shows for LEAD_RULE_NOTICE_DAYS days from the day the rule was switched on
@@ -3677,14 +3698,11 @@ function renderMainCreativePerformance(metrics) {
   const section = document.getElementById('mainCreativeSection');
   const container = document.getElementById('mainCreativeRanking');
   const group = creativeGroup(inView);
-  const scored = rankCreativeTypes(creativeTypeMap(group.filter));
-  if (scored.length === 0 || scored.every(s => s.leads === 0)) { section.hidden = true; creativeCoverageText = ''; return; }
+  const list = creativeFormatList(creativeTypeMap(group.filter));
+  if (!list.length || list.every(t => !(t.spend > 0))) { section.hidden = true; creativeCoverageText = ''; return; }
   section.hidden = false;
-  creativeCoverageText = creativeCoverageNote(scored, group, false);
-  const foot = document.getElementById('creativeFoot'), order = creativeOrderText(scored);
-  foot.hidden = !order;
-  foot.textContent = order;
-  container.innerHTML = creativeCardsHTML(scored, group.kind || (currentKind === 'all' ? 'objekt' : currentKind), 'main');
+  creativeCoverageText = creativeCoverageNote(list, group, false);
+  container.innerHTML = creativeCardsHTML(list, group.kind || (currentKind === 'all' ? 'objekt' : currentKind), 'main');
   growBars(container);
   decorateBanners(container);
 }
@@ -4479,20 +4497,16 @@ function renderCreativePerformance(campaignIds, totalSpend, totalLeads) {
   const container = document.getElementById('creativeRanking');
   const idSet = new Set(Array.isArray(campaignIds) ? campaignIds : [campaignIds]);
   const group = creativeGroup(function(id) { return idSet.has(id); });
-  const scored = rankCreativeTypes(creativeTypeMap(group.filter));
-  if (scored.length === 0 || scored.every(function(s) { return s.leads === 0; })) {
+  const list = creativeFormatList(creativeTypeMap(group.filter));
+  if (!list.length || list.every(function(t) { return !(t.spend > 0); })) {
     section.hidden = true;
     container.replaceChildren();
-    document.getElementById('detailCreativeFoot').hidden = true;
     return;
   }
   section.hidden = false;
-  const covered = creativeCoverageNote(scored, group, true, function(id) { return idSet.has(id); });
+  const covered = creativeCoverageNote(list, group, true, function(id) { return idSet.has(id); });
   setText('detailCreativeNote', (covered ? covered + ', ' : '') + (currentFilter === 'all' ? 'gesamte Laufzeit' : 'gesamte Laufzeit, ohne Monatsfilter'));
-  const foot = document.getElementById('detailCreativeFoot'), order = creativeOrderText(scored);
-  foot.hidden = !order;
-  foot.textContent = order;
-  container.innerHTML = creativeCardsHTML(scored, campaignKinds[currentDetailCampaignId] || 'objekt', currentDetailCampaignId || 'detail');
+  container.innerHTML = creativeCardsHTML(list, campaignKinds[currentDetailCampaignId] || 'objekt', currentDetailCampaignId || 'detail');
   growBars(container);
   decorateBanners(container);
 }
@@ -4755,7 +4769,9 @@ const INTEL = Object.freeze({
   draws: 1000,    // bootstrap draws over properties
   seed: 20261025,
   minUnits: 12,   // a comparison or finding is shown only from 12 units (objects or campaigns)
-  minSideSpend: 30 // a side of a creative comparison (and a format of a campaign) counts from 30 € spend
+  minSideSpend: 30, // a format (or content) counts as booked in a campaign from 30 € spend
+  compareBudget: 500, // campaigns are compared on their first 500 € …
+  compareFallback: 250 // … or on their first 250 € while fewer than 12 campaigns reached 500 €
 });
 const INTEL_DAY_BUCKETS = Object.freeze([[1, 3], [4, 7], [8, 14], [15, 21], [22, Infinity]]);
 const INTEL_SPEND_BUCKETS = Object.freeze([[0, 150], [150, 300], [300, 500], [500, 750], [750, Infinity]]);
@@ -5607,175 +5623,150 @@ function budgetAllocation(creativeRows) {
     perObject: ids.length ? intelMedian(ids.map(function(id) { return by[id].length; })) : null };
 }
 
+// Formats of a campaign: the talking head, and scenic video (the scenic reel and any other video,
+// never the talking head). `video` is every video, for "Person im Video".
 const INTEL_FORMATS = Object.freeze({
-  carousel: ['carousel', 'karussell'],
-  single: ['single_image', 'image', 'bild', 'einzelbild'],
-  video: ['scn_reel', 'th_reel', 'reel', 'video'],
-  // video side of "Video statt nur Bilder": every video but the talking head
-  motion: ['scn_reel', 'reel', 'video'],
-  still: ['carousel', 'karussell', 'single_image', 'image', 'bild', 'einzelbild'],
   th: ['th_reel'],
-  scene: ['scn_reel']
+  motion: ['scn_reel', 'reel', 'video'],
+  video: ['scn_reel', 'th_reel', 'reel', 'video']
 });
 
-// Format against format inside the same property. The talking head is never compared as a swap
-// inside a property, neither against the scenic reel nor against pictures: it is an addition to the
-// scenic reel (talkingHeadAddOn). Its creatives stay out of both sides of the video comparison.
-const INTEL_COMPARISONS = Object.freeze([
-  { key: 'video', a: 'motion', b: 'still', seed: 11, label: 'Video statt nur Bilder', vs: 'Szenisches Reel oder Video gegen Bild und Karussell, ohne Talking Head' },
-  { key: 'carousel-single', a: 'carousel', b: 'single', seed: 12, label: 'Karussell statt Einzelbild', vs: 'Karussell gegen Einzelbild' }
+// Oskar, 26.10.2026: whether a format pays off is a question about whole campaigns. Inside one
+// campaign Meta puts more budget on some ads, and a lead gets dearer as the budget grows, so a format
+// compared ad by ad looks dear just because Meta favoured it. The unit is therefore the property
+// campaign (the objects of buildIntelObjects with all their Formular phases), compared at equal budget.
+const INTEL_FORMAT_COMPARISONS = Object.freeze([
+  { key: 'th', name: 'Talking Head', label: 'mit Talking Head', types: INTEL_FORMATS.th, seed: 31 },
+  { key: 'scene', name: 'Szenisches Video', label: 'mit szenischem Video', types: INTEL_FORMATS.motion, seed: 32 }
 ]);
 
-// Contents from the creative classification (creatives[].tags), compared like the formats.
-// Values follow the taxonomy 1.1 and are matched without case; creatives without tags are skipped.
+// Contents from the creative classification (creatives[].tags, taxonomy 1.1, matched without case),
+// compared the same way: a campaign has a content when its classified ads with it had at least 30 €
+// budget. A campaign without 30 € of classified ads (of videos, for "Person im Video") stays out.
 const INTEL_TAG_COMPARISONS = Object.freeze([
-  { key: 'person', field: 'person_im_bild', videoOnly: true, seed: 13, label: 'Person im Video', vs: 'mit gegen ohne Person, nur Videos',
-    a: ['Makler', 'andere Person'], b: ['keine'] },
-  { key: 'outside', field: 'erstes_motiv', seed: 14, label: 'Außen statt innen im ersten Bild', vs: 'Außen, Garten, Ausblick oder Luftbild gegen Innenraum',
-    a: ['Außenansicht', 'Garten/Terrasse', 'Ausblick', 'Drohne/Luftbild'], b: ['Wohnbereich', 'Küche', 'Bad', 'Schlafzimmer'] },
-  { key: 'drone', field: 'drohne_enthalten', seed: 15, label: 'Drohnenaufnahme enthalten', vs: 'mit gegen ohne Luftaufnahme', a: ['ja'], b: ['nein'] },
-  { key: 'price', field: 'preis_sichtbar', seed: 16, label: 'Preis sichtbar', vs: 'mit gegen ohne Preis', a: ['ja'], b: ['nein'] },
-  { key: 'location', field: 'einstieg_hook', seed: 17, label: 'Einstieg mit Lage', vs: 'Lage gegen eine andere Aussage im Einstieg',
-    a: ['Lage'], b: ['Preis', 'Besonderheit', 'Frage', 'Emotion/Lifestyle', 'Direkte Ansprache/Angebot'] }
+  { key: 'drone', field: 'drohne_enthalten', seed: 41, label: 'Drohnenaufnahme', a: ['ja'] },
+  { key: 'price', field: 'preis_sichtbar', seed: 42, label: 'Preis sichtbar', a: ['ja'] },
+  { key: 'location', field: 'einstieg_hook', seed: 43, label: 'Einstieg mit Lage', a: ['Lage'] },
+  { key: 'person', field: 'person_im_bild', videoOnly: true, seed: 44, label: 'Person im Video', a: ['Makler', 'andere Person'] },
+  { key: 'outside', field: 'erstes_motiv', seed: 45, label: 'Außen im ersten Bild', a: ['Außenansicht', 'Garten/Terrasse', 'Ausblick', 'Drohne/Luftbild'] }
 ]);
 
-// Side A against side B inside the same property (algo/intel/a05). `sideOf` gives 'a', 'b' or ''
-// for a creative row; `cellOf` splits a property into cells that are compared on their own (the
-// contents: one cell per format, so a content contrast never measures a format). Each side needs
-// 30 € spend in a cell; the unit stays the property. Stages from algo/04 section 1: a first reading
-// from 12 properties with both sides and 40 leads per side, a tendency when the 80 % range is clear
-// of zero, firm from 30 properties, 100 leads per side, 95 % range clear of zero and the same
-// direction in two thirds of the properties. Cheaper and dearer are treated alike. Below the first
-// reading (level 0) the page shows nothing.
-function creativeContrast(creativeRows, cmp, sideOf, cellOf) {
-  const cells = Object.create(null), owner = Object.create(null);
-  creativeRows.forEach(function(c) {
-    const side = sideOf(c);
-    if (!side) return;
-    const key = cellOf ? c.obj + '|' + cellOf(c) : c.obj;
-    const t = cells[key] || (cells[key] = { a: 0, sa: 0, b: 0, sb: 0, na: 0, nb: 0 });
-    owner[key] = c.obj;
-    t[side] += c.leads;
-    t['s' + side] += c.spend;
-    t['n' + side] += 1;
-  });
-  // properties with their cells that have both sides
-  const byObj = Object.create(null), order = [];
-  Object.keys(cells).forEach(function(key) {
-    const t = cells[key];
-    if (!(t.sa >= INTEL.minSideSpend && t.sb >= INTEL.minSideSpend)) return;
-    const id = owner[key];
-    if (!byObj[id]) { byObj[id] = []; order.push(id); }
-    byObj[id].push(t);
-  });
-  const units = order.map(function(id) { return byObj[id]; });
-  const strata = [].concat.apply([], units);
-  const out = Object.assign({}, cmp, { nObj: units.length,
-    leadsA: strata.reduce(function(t, s) { return t + s.a; }, 0), leadsB: strata.reduce(function(t, s) { return t + s.b; }, 0),
-    creativesA: strata.reduce(function(t, s) { return t + s.na; }, 0), creativesB: strata.reduce(function(t, s) { return t + s.nb; }, 0) });
-  // effect on the cost per lead of A against B, in percent; cheaper is negative
-  const effect = function(rr) { return Number.isFinite(rr) && rr > 0 ? (1 / rr - 1) * 100 : NaN; };
-  // direction per property over its cells, with half a lead on each side against empty cells
-  out.cheaper = units.filter(function(cellsOfObj) {
-    let num = 0, den = 0;
-    cellsOfObj.forEach(function(s) { const total = s.sa + s.sb; num += (s.a + 0.5) * s.sb / total; den += (s.b + 0.5) * s.sa / total; });
-    return num > den;
-  }).length;
-  if (units.length >= 2) {
-    out.effect = effect(mantelHaenszel(strata));
-    // resamples properties with all their cells
-    const boot = intelBootstrap(units.length, function(idx) {
-      const s = [];
-      idx.forEach(function(i) { units[i].forEach(function(c) { s.push(c); }); });
-      return [effect(mantelHaenszel(s))];
-    }, INTEL.draws, INTEL.seed + cmp.seed).map(function(v) { return v[0]; });
-    out.ci80 = intelInterval(boot, 0.8);
-    out.ci90 = intelInterval(boot, 0.9);
-    out.ci95 = intelInterval(boot, 0.95);
+// Spend and leads of a delivery series up to the day on which the spend reached `budget` (that day
+// counts in full, as in leadsAtSpend); null when the budget was never reached
+function intelAtBudget(series, budget) {
+  let spend = 0, leads = 0;
+  for (let i = 0; i < series.length; i++) {
+    spend += series[i].spend;
+    leads += series[i].leads;
+    if (spend >= budget) return { spend: spend, leads: leads };
   }
-  const clear = function(ci) { return ci && (ci[0] > 0 || ci[1] < 0); };
-  const same = Math.max(out.cheaper, units.length - out.cheaper);
-  out.level = units.length < INTEL.minUnits || out.leadsA < 40 || out.leadsB < 40 || !Number.isFinite(out.effect) ? 0
-    : units.length >= 30 && out.leadsA >= 100 && out.leadsB >= 100 && clear(out.ci95) && same >= units.length * 2 / 3 ? 3
-    : clear(out.ci80) ? 2 : 1;
-  return out;
+  return null;
 }
 
-function formatEffects(creativeRows) {
-  return INTEL_COMPARISONS.map(function(cmp) {
-    return creativeContrast(creativeRows, cmp, function(c) {
-      return INTEL_FORMATS[cmp.a].indexOf(c.type) >= 0 ? 'a' : INTEL_FORMATS[cmp.b].indexOf(c.type) >= 0 ? 'b' : '';
-    });
+// Median that keeps a campaign without a lead (cost per lead Infinity) instead of dropping it
+function intelMedianAll(values) {
+  const s = values.slice().sort(function(a, b) { return a < b ? -1 : a > b ? 1 : 0; });
+  if (!s.length) return NaN;
+  const h = (s.length - 1) / 2, lo = Math.floor(h);
+  return h === lo ? s[lo] : (s[lo] + s[lo + 1]) / 2;
+}
+
+// Cost per lead of A against B in percent (cheaper is negative), from the two medians
+function intelMedianEffect(a, b) {
+  const ma = intelMedianAll(a), mb = intelMedianAll(b);
+  return Number.isFinite(ma) && Number.isFinite(mb) && mb > 0 ? (ma / mb - 1) * 100 : NaN;
+}
+
+// The campaigns of the comparisons: every property with creative data (30 € at least) that reached
+// the comparison budget, with its cost per lead over the first 500 € (250 € while fewer than 12
+// reached 500 €). typeSpend: budget per creative type over all its phases, exact copies once
+// (objectCreatives). `short`: properties that have not reached the budget yet; `unknown`: properties
+// without creative data.
+function campaignUnits(objects, creativeRows) {
+  const by = Object.create(null);
+  creativeRows.forEach(function(c) {
+    const t = by[c.obj] || (by[c.obj] = { spend: 0, types: Object.create(null), rows: [] });
+    t.spend += c.spend;
+    t.types[c.type] = (t.types[c.type] || 0) + c.spend;
+    t.rows.push(c);
   });
-}
-
-// Format of a creative for the cells of the content comparisons: synonyms count as one format
-function intelFormatOf(type) {
-  const t = String(type || '').toLowerCase();
-  return INTEL_FORMATS.carousel.indexOf(t) >= 0 ? 'carousel' : INTEL_FORMATS.single.indexOf(t) >= 0 ? 'single' : t;
-}
-
-// Contents against each other inside the same property and the same format: a drone shot in a
-// scenic reel against a scenic reel without one, never a reel against a picture. "Person im Video"
-// therefore never compares a talking head with a scenic reel.
-function tagEffects(creativeRows) {
-  const norm = function(v) { return String(v === null || v === undefined ? '' : v).trim().toLowerCase(); };
-  return INTEL_TAG_COMPARISONS.map(function(cmp) {
-    const a = cmp.a.map(norm), b = cmp.b.map(norm);
-    return creativeContrast(creativeRows, cmp, function(c) {
-      if (!c.tags || (cmp.videoOnly && INTEL_FORMATS.video.indexOf(c.type) < 0)) return '';
-      const v = norm(c.tags[cmp.field]);
-      return a.indexOf(v) >= 0 ? 'a' : b.indexOf(v) >= 0 ? 'b' : '';
-    }, function(c) { return intelFormatOf(c.type); });
+  const known = objects.filter(function(o) { return by[o.id] && by[o.id].spend >= INTEL.minSideSpend; });
+  const reached = function(budget) { return known.filter(function(o) { return intelAtBudget(o.series, budget); }).length; };
+  const budget = reached(INTEL.compareBudget) >= INTEL.minUnits ? INTEL.compareBudget : INTEL.compareFallback;
+  const units = [];
+  known.forEach(function(o) {
+    const at = intelAtBudget(o.series, budget);
+    if (!at) return;
+    units.push({ id: o.id, name: o.name, programId: o.programId, spend: at.spend, leads: at.leads,
+      cpl: at.leads > 0 ? at.spend / at.leads : Infinity, typeSpend: by[o.id].types, creatives: by[o.id].rows });
   });
+  return { budget: budget, units: units, short: known.length - units.length, unknown: objects.length - known.length };
 }
 
-// Does a talking-head reel on top of the scenic reel pay off for the whole campaign? Unit is the
-// completed property campaign (program) that ran a scenic reel: with a talking-head reel as well
-// (A) against scenic only (B); campaigns with a talking head only stay out. A format counts as run
-// from 30 € spend, as in the comparisons inside a property. Campaigns of shared accounts whose
-// window starts after the first delivery miss their first days and stay out, as in every
-// comparison. Outcome is the cost per lead of the whole campaign over its run time, as in the
-// campaign table. Effect is the median of A against the median of B, in percent (cheaper is
-// negative), with a range from resampling the campaigns inside each group. A comparison between
-// campaigns, not a controlled test.
-// rows: { id, name, kind, completed, censored, spend, leads, typeSpend: { creative type: spend } }
-// Stages: first reading from 12 campaigns with 4 in each group, a tendency when the 80 % range is
-// clear of zero, firm from 30 campaigns with 10 in each group, 100 leads per side and the 95 %
-// range clear of zero.
-function talkingHeadAddOn(rows) {
-  const ran = function(r, list) {
-    const spend = r.typeSpend || {};
-    return Object.keys(spend).reduce(function(t, k) { return t + (list.indexOf(String(k).toLowerCase()) >= 0 ? spend[k] : 0); }, 0) >= INTEL.minSideSpend;
+// Campaigns with against campaigns without (has(unit): true, false, or null to leave it out). Effect:
+// median cost per lead with against the median without, in percent, with a range from resampling the
+// campaigns inside each group (seeded). Stages: shown from 12 campaigns with 4 in each group (a first
+// reading), a tendency when the 80 % range is clear of zero, firm from 30 campaigns with 10 in each
+// group, 100 leads per side and the 95 % range clear of zero. Below 5 % either way the page calls it
+// practically the same. A comparison between campaigns, not a controlled test.
+function campaignContrast(units, has, cmp) {
+  const A = [], B = [];
+  units.forEach(function(u) {
+    const side = has(u);
+    if (side === true) A.push(u); else if (side === false) B.push(u);
+  });
+  const cpls = function(list) { return list.map(function(u) { return u.cpl; }); };
+  const leads = function(list) { return list.reduce(function(t, u) { return t + u.leads; }, 0); };
+  const named = function(list) {
+    return list.map(function(u) { return { id: u.id, name: u.name, cpl: u.cpl }; }).sort(function(x, y) { return x.cpl - y.cpl || 0; });
   };
-  const units = rows.filter(function(r) {
-    return r.kind === 'objekt' && r.completed && !r.censored && r.spend > 0 && r.leads > 0 && ran(r, INTEL_FORMATS.scene);
-  }).map(function(r) { return { id: r.id, name: r.name, cpl: r.spend / r.leads, leads: r.leads, spend: r.spend, th: ran(r, INTEL_FORMATS.th) }; })
-    .sort(function(x, y) { return x.cpl - y.cpl; });
-  const A = units.filter(function(u) { return u.th; }), B = units.filter(function(u) { return !u.th; });
-  const sum = function(list, key) { return list.reduce(function(t, u) { return t + u[key]; }, 0); };
-  const out = { n: units.length, nA: A.length, nB: B.length, leadsA: sum(A, 'leads'), leadsB: sum(B, 'leads'), unitsA: A, unitsB: B,
-    cplsA: A.map(function(u) { return u.cpl; }), cplsB: B.map(function(u) { return u.cpl; }), level: 0 };
+  const out = Object.assign({}, cmp, { n: A.length + B.length, nA: A.length, nB: B.length, leadsA: leads(A), leadsB: leads(B),
+    unitsA: named(A), unitsB: named(B), level: 0, same: false });
   if (!A.length || !B.length) return out;
-  const effect = function(a, b) { const ma = intelMedian(a), mb = intelMedian(b); return mb > 0 ? (ma / mb - 1) * 100 : NaN; };
-  out.medianA = intelMedian(out.cplsA);
-  out.medianB = intelMedian(out.cplsB);
-  out.effect = effect(out.cplsA, out.cplsB);
-  const rand = intelRandom(INTEL.seed + 30);
+  const a = cpls(A), b = cpls(B);
+  out.medianA = intelMedianAll(a);
+  out.medianB = intelMedianAll(b);
+  out.effect = intelMedianEffect(a, b);
+  const rand = intelRandom(INTEL.seed + cmp.seed);
   const draw = function(list) { const d = []; for (let i = 0; i < list.length; i++) d.push(list[Math.floor(rand() * list.length)]); return d; };
   const boot = [];
   for (let k = 0; k < INTEL.draws; k++) {
-    const v = effect(draw(out.cplsA), draw(out.cplsB));
+    const v = intelMedianEffect(draw(a), draw(b));
     if (Number.isFinite(v)) boot.push(v);
   }
   out.ci80 = intelInterval(boot, 0.8);
-  out.ci90 = intelInterval(boot, 0.9);
   out.ci95 = intelInterval(boot, 0.95);
   const clear = function(ci) { return ci[0] > 0 || ci[1] < 0; };
   out.level = out.n < INTEL.minUnits || A.length < 4 || B.length < 4 || !Number.isFinite(out.effect) ? 0
     : out.n >= 30 && A.length >= 10 && B.length >= 10 && out.leadsA >= 100 && out.leadsB >= 100 && clear(out.ci95) ? 3
     : clear(out.ci80) ? 2 : 1;
+  out.same = Number.isFinite(out.effect) && Math.abs(out.effect) < 5;
   return out;
+}
+
+// Talking head and scenic video, then the contents, all between whole campaigns at equal budget
+function campaignComparisons(objects, creativeRows) {
+  const base = campaignUnits(objects, creativeRows);
+  const spendOf = function(u, types) {
+    return Object.keys(u.typeSpend).reduce(function(t, k) { return t + (types.indexOf(k) >= 0 ? u.typeSpend[k] : 0); }, 0);
+  };
+  const formats = INTEL_FORMAT_COMPARISONS.map(function(cmp) {
+    return campaignContrast(base.units, function(u) { return spendOf(u, cmp.types) >= INTEL.minSideSpend; }, cmp);
+  });
+  const norm = function(v) { return String(v === null || v === undefined ? '' : v).trim().toLowerCase(); };
+  const tags = INTEL_TAG_COMPARISONS.map(function(cmp) {
+    const a = cmp.a.map(norm);
+    return campaignContrast(base.units, function(u) {
+      let known = 0, hit = 0;
+      u.creatives.forEach(function(c) {
+        if (!c.tags || (cmp.videoOnly && INTEL_FORMATS.video.indexOf(c.type) < 0)) return;
+        known += c.spend;
+        if (a.indexOf(norm(c.tags[cmp.field])) >= 0) hit += c.spend;
+      });
+      return known >= INTEL.minSideSpend ? hit >= INTEL.minSideSpend : null;
+    }, cmp);
+  });
+  return Object.assign(base, { formats: formats, tags: tags });
 }
 
 // Weekend against weekdays, the only weekday contrast that is tested; strata are property and
@@ -5939,41 +5930,9 @@ function intelData() {
     const creatives = objectCreatives(built.objects, allCreatives);
     built.creatives = creatives.rows;
     built.quality.duplicates = creatives.duplicates;
-    built.campaignRows = intelCampaignRows();
     _intelCache = built;
   }
   return _intelCache;
-}
-
-// Whole campaigns (programs) with the spend and leads of the campaign table and the spend per
-// creative type (exact copies once, as in objectCreatives), for the talking-head comparison.
-// A campaign of a shared account whose window starts after its first delivery is marked censored.
-function intelCampaignRows() {
-  const typeSpend = Object.create(null), seen = new Set();
-  allCreatives.forEach(function(c) {
-    const m = c.metrics || {};
-    const spend = parseFloat(m.spend) || 0;
-    if (!(spend > 0)) return;
-    const key = [c.campaign_id, c.creative_type, spend.toFixed(2), parseInt(m.leads) || 0, parseInt(m.impressions) || 0].join('|');
-    if (seen.has(key)) return;
-    seen.add(key);
-    const t = typeSpend[c.campaign_id] || (typeSpend[c.campaign_id] = Object.create(null));
-    const type = String(c.creative_type || '').toLowerCase();
-    t[type] = (t[type] || 0) + spend;
-  });
-  return buildProgramRows(allMetrics).map(function(row) {
-    const spend = Object.create(null);
-    row.flights.forEach(function(f) {
-      const t = typeSpend[f.id] || {};
-      Object.keys(t).forEach(function(k) { spend[k] = (spend[k] || 0) + t[k]; });
-    });
-    const censored = row.flights.some(function(f) { return f.fWindow && f.fWindow.rolling && f.fDates[0] && f.fDates[0] <= f.fWindow.since; });
-    // same rule as for objects: paused campaigns count as completed after 7 days without delivery
-    const last = row.flights.reduce(function(max, f) { const d = f.fDates[f.fDates.length - 1] || ''; return d > max ? d : max; }, '');
-    const completed = intelSettled(row.flights.map(campaignStatus), last, lastDataDay());
-    return { id: row.program.id, name: programDisplayName(row.program), kind: programKind(row.program), completed: completed,
-      censored: censored, spend: row.cplSpend, leads: row.leads, typeSpend: spend };
-  });
 }
 
 function destroyIntelCharts() {
@@ -6059,21 +6018,22 @@ function renderIntelligence() {
     return;
   }
   if (O.length < 4) {
-    box.innerHTML = qualityHTML(data, waitingLine(O, [], null)) + smallClientHTML(O);
+    box.innerHTML = qualityHTML(data, waitingLine(O, null)) + smallClientHTML(O);
     growBars(box);
     linkObjectRows(box);
     return;
   }
   const ramp = rampCurve(O), marginal = marginalCpl(O), expect = expectationValues(O), shrink = shrinkObjects(O);
-  const formats = formatEffects(data.creatives), tags = tagEffects(data.creatives), th = talkingHeadAddOn(data.campaignRows);
+  // formats and contents between whole campaigns at equal budget, the first section of the tab
+  const cmp = campaignComparisons(O, data.creatives);
   const gender = genderSplit(O, allDemoInsights), ages = ageShares(O, allDemoInsights), regions = homeRegionShares(O, allGeoInsights);
   // lead rule: the weekend is only compared inside one time zone
   const alloc = budgetAllocation(data.creatives), weekend = leadRule ? weekendByTimezone(O) : weekendContrast(O);
   // only features with 12 properties are listed
   _corrStats = featureCorrelations(O).filter(function(c) { return c.shown; });
   if (_corrStats.length && !_corrStats.some(function(c) { return c.key === corrSelected; })) corrSelected = _corrStats[0].key;
-  box.innerHTML = qualityHTML(data, waitingLine(O, formats.concat(tags), th), th.level >= 1) + rampHTML(ramp, marginal, weekend) + expectHTML(expect) + objectsHTML(shrink) +
-    effectsHTML(formats.concat(tags), th) + corrHTML() + audienceHTML(gender, ages, regions, audienceCover(O, regions)) + allocationHTML(alloc);
+  box.innerHTML = qualityHTML(data, waitingLine(O, cmp)) + formatsHTML(cmp) + rampHTML(ramp, marginal, weekend) + expectHTML(expect) + objectsHTML(shrink) +
+    corrHTML() + audienceHTML(gender, ages, regions, audienceCover(O, regions)) + allocationHTML(alloc);
   applyIcons(box);
   growBars(box);
   drawRampCharts(ramp, marginal);
@@ -6083,31 +6043,20 @@ function renderIntelligence() {
   linkObjectRows(box);
 }
 
-// The one line of the data basis on what is still waiting for data: comparisons in general below
-// 12 objects; otherwise the creative comparisons that miss 12 objects with both variants (or, with
-// 12 objects, the 40 leads per side) and, in campaigns, the talking-head comparison. A client that
-// never ran one of the two talking-head groups is not waiting for it.
-function waitingLine(O, creativeCmps, th) {
+// The one line of the data basis on what is still waiting: comparisons in general below 12 objects;
+// otherwise the format comparisons that miss 12 campaigns at the comparison budget or 4 in a group.
+// A client that never booked a format (or booked it everywhere) is not waiting for its comparison.
+function waitingLine(O, cmp) {
   const min = INTEL.minUnits;
   if (O.length < min) return 'Vergleiche erscheinen ab ' + formatNum(min) + ' Objekten; zurzeit ' + formatNum(O.length) + '.';
-  const waiting = creativeCmps.filter(function(f) { return !f.level; });
-  const short = waiting.filter(function(f) { return f.nObj < min; }).map(function(f) { return f.nObj; });
-  const leadsOnly = waiting.length > short.length;
-  const shown = creativeCmps.some(function(f) { return f.level; }) || Boolean(th && th.level);
-  const what = shown ? 'Weitere Werbemittel-Vergleiche' : 'Werbemittel-Vergleiche';
-  const parts = [];
-  if (short.length) {
-    const top = Math.max.apply(null, short);
-    parts.push(what + ' erscheinen ab ' + formatNum(min) + ' Objekten mit beiden Varianten' + (leadsOnly ? ' und 40 Leads je Seite' : '') + '; zurzeit ' +
-      (top ? (new Set(short).size > 1 ? 'höchstens ' : '') + formatNum(top) + (leadsOnly ? ' Objekte' : '') : 'noch keines') + '.');
-  } else if (leadsOnly) {
-    parts.push(what + ' haben ' + formatNum(min) + ' Objekte erreicht und erscheinen, sobald jede Seite 40 Leads hat.');
+  const waiting = cmp ? cmp.formats.filter(function(f) { return !f.level && f.nA && f.nB; }) : [];
+  if (!waiting.length) return '';
+  if (cmp.units.length < min) {
+    return 'Formatvergleiche erscheinen ab ' + formatNum(min) + ' Kampagnen mit ' + formatEUR(cmp.budget) + ' Budget; zurzeit ' + formatNum(cmp.units.length) + '.';
   }
-  if (th && !th.level && th.nA && th.nB) {
-    parts.push('Der Talking-Head-Vergleich erscheint ab ' + formatNum(min) + ' abgeschlossenen Kampagnen mit szenischem Reel, je 4 mit und ohne Talking Head; zurzeit ' +
-      formatNum(th.nA) + ' mit und ' + formatNum(th.nB) + ' ohne.');
-  }
-  return parts.join(' ');
+  return waiting.map(function(f) {
+    return 'Der Vergleich ' + f.label + ' erscheint ab je 4 Kampagnen mit und ohne; zurzeit ' + formatNum(f.nA) + ' mit und ' + formatNum(f.nB) + ' ohne.';
+  }).join(' ');
 }
 
 // property rows open their campaign in the sheet
@@ -6118,7 +6067,7 @@ function linkObjectRows(box) {
   });
 }
 
-function qualityHTML(data, waiting, wholeCampaigns) {
+function qualityHTML(data, waiting) {
   const q = data.quality, O = data.objects;
   const completed = O.filter(function(o) { return o.completed; }).length;
   const items = ['Gezählt wird je Objekt: alle Phasen eines Objekts zusammen, Kosten pro Lead immer als Summe der Ausgaben durch Summe der Leads.'];
@@ -6143,8 +6092,6 @@ function qualityHTML(data, waiting, wholeCampaigns) {
   if (!leadRule && q.conversionNamed) items.push(plural(q.conversionNamed, 'Phase trägt', 'Phasen tragen') + ' ein anderes Kampagnenziel im Namen, ' + (q.conversionNamed === 1 ? 'ist' : 'sind') + ' aber auf Leads ausgerichtet und ' + (q.conversionNamed === 1 ? 'zählt' : 'zählen') + ' mit.');
   if (q.duplicates) items.push(plural(q.duplicates, 'doppeltes Werbemittel ist', 'doppelte Werbemittel sind') + ' nur einmal gezählt.');
   items.push('Klicks fließen nicht ein, weil sie nicht an allen Tagen gemessen sind.');
-  // the talking-head comparison takes whole campaigns, so the lines above need one exception
-  if (wholeCampaigns) items.push('Ausnahme: Der Talking-Head-Vergleich rechnet mit ganzen Kampagnen und allen ihren Phasen, wie die Kampagnentabelle.');
   if (waiting) items.push(waiting);
   return '<details class="dq"><summary><span>Datenbasis: ' + plural(O.length, 'Objekt', 'Objekte') + ', davon ' + formatNum(completed) + ' abgeschlossen</span><span class="dq-more">Regeln</span></summary><ul>' +
     items.map(function(t) { return '<li>' + escHtml(t) + '</li>'; }).join('') + '</ul></details>';
@@ -6360,94 +6307,88 @@ function objectsHTML(shrink) {
     '<p class="sec-foot">' + escHtml(text) + ' Farbig markiert wird ein Objekt erst ab 97,5 % Wahrscheinlichkeit. Der Strich zeigt den echten Wert, der Punkt die Schätzung, die wenige Leads zum Üblichen zieht.</p>';
 }
 
-// Axis of the forest plot in percent change of the cost per lead: −50 to +50 % as long as every
-// shown point and range fits, otherwise wider on the side that needs it (cheaper ends at −100 %).
-// A value beyond the widest axis is drawn at the edge with a small cap, never as a bar of no width.
-const FOREST_STEPS = [50, 100, 200, 400];
-function forestAxis(rows) {
-  const lo = Math.min.apply(null, rows.map(function(f) { return Math.min(f.effect, f.ci80[0]); }).concat([0]));
-  const hi = Math.max.apply(null, rows.map(function(f) { return Math.max(f.effect, f.ci80[1]); }).concat([0]));
-  const fit = function(v) { return FOREST_STEPS.filter(function(st) { return st >= v; })[0] || FOREST_STEPS[FOREST_STEPS.length - 1]; };
-  return { lo: Math.min(fit(-lo), 100), hi: fit(hi) };
-}
-function forestPos(v, axis) {
-  const ax = axis || { lo: 50, hi: 50 };
-  return (Math.max(-ax.lo, Math.min(ax.hi, v)) + ax.lo) / (ax.lo + ax.hi) * 100;
-}
-// ticks in even steps from the left to the right end of the axis, so labels never crowd on phones
-function forestTicks(ax) {
-  const total = ax.lo + ax.hi, step = total <= 100 ? 25 : total <= 200 ? 50 : total <= 400 ? 100 : 200;
-  const ticks = [-ax.lo];
-  for (let v = Math.ceil(-ax.lo / step + 1e-9) * step; v < ax.hi; v += step) ticks.push(v);
-  ticks.push(ax.hi);
-  return ticks.filter(function(v, i) { return !i || v !== ticks[i - 1]; });
-}
-function forestHead(label, axis) {
-  const ax = axis || { lo: 50, hi: 50 };
-  return '<div class="fr head"><span></span><div class="fx">' + forestTicks(ax).map(function(v) {
-    return '<span style="left:' + forestPos(v, ax) + '%">' + (v ? signedPct(v) : '0') + '</span>';
-  }).join('') + '</div><span class="r">' + escHtml(label) + '</span></div>';
-}
-// one comparison: point = effect on the cost per lead, bar = 80 % range; coloured only when the range is clear of zero
-function forestPlot(effect, ci, level, axis) {
-  const ax = axis || { lo: 50, hi: 50 };
-  const col = level >= 2 ? (effect < 0 ? 'var(--green)' : 'var(--warn)') : '#A79E9C';
-  const left = forestPos(ci[0], ax), right = forestPos(ci[1], ax);
-  return '<div class="fplot"><span class="zero" style="left:' + forestPos(0, ax) + '%"></span><span class="ci" style="left:' + Math.min(left, 99.4) + '%;width:' + Math.max(right - left, 0.6) + '%;background:' + col + '"></span>' +
-    '<span class="dot" style="left:' + forestPos(effect, ax) + '%;background:' + col + '"></span></div>';
+// ---------- formats and contents: whole campaigns at equal budget ----------
+
+// A campaign's cost per lead; a campaign without a lead up to the budget has none
+function cplText(v) {
+  return Number.isFinite(v) ? formatEUR(v) : 'kein Lead';
 }
 
-// Effect on the cost per lead: formats and contents inside the same property (forest plot) and the
-// talking head as an addition, between campaigns. Only comparisons with 12 units appear; without
-// any the section is left out.
-function effectsHTML(cmps, th) {
-  const list = cmps.filter(function(f) { return f.level >= 1; }), axis = forestAxis(list);
-  const rows = list.map(function(f) {
-    const sub = escHtml(f.vs) + '</span><span>' + escHtml(formatNum(f.creativesA) + ' gegen ' + formatNum(f.creativesB) + ' Werbemittel in ' + plural(f.nObj, 'Objekt', 'Objekten'));
-    const value = '<b class="' + (f.level >= 2 ? (f.effect < 0 ? 'pos' : 'neg') : 'muted') + '">' + signedPct(f.effect) + '</b>';
-    const note = (f.effect < 0 ? 'günstiger in ' + formatNum(f.cheaper) : 'teurer in ' + formatNum(f.nObj - f.cheaper)) + ' von ' + plural(f.nObj, 'Objekt', 'Objekten');
-    return '<div class="fr"><div class="nm"><b>' + escHtml(f.label) + '</b><span>' + sub + '</span></div>' + forestPlot(f.effect, f.ci80, f.level, axis) +
-      '<div class="fv">' + value + certHTML(f.level) + '<small>' + escHtml(note) + '</small></div></div>';
-  }).join('');
-  const inside = rows ? '<div class="card pad"><div class="card-h"><div><h3>Formate und Inhalte der Werbemittel</h3><p>Verglichen innerhalb desselben Objekts, Inhalte zusätzlich im selben Format (etwa Reel mit gegen Reel ohne Drohne) · Punkt = geschätzte Wirkung, Balken = 80-%-Spanne · je Seite mindestens 30 € Budget</p></div></div>' +
-    '<div class="forest">' + forestHead('Wirkung auf die Kosten pro Lead', axis) + rows + '</div><p class="forest-note">Links von der Null = günstiger. Grün oder Orange nur, wenn die ganze Spanne auf einer Seite liegt. ' +
-    'Eine erste Einschätzung gibt es ab 12 Objekten mit beiden Varianten, belastbar wird sie ab 30 Objekten mit klarer Spanne.</p></div>' : '';
-  const add = th && th.level >= 1 ? talkingHeadHTML(th) : '';
-  if (!inside && !add) return '';
-  return '<div class="sec-h base"><h2>Wirkung auf die Kosten pro Lead</h2><span class="sec-note">Was ein Format oder Inhalt an den Kosten pro Lead ändert</span></div>' +
-    inside + (add ? '<div' + (inside ? ' style="margin-top:14px"' : '') + '>' + add + '</div>' : '');
+// One plain sentence per comparison: direction and size at equal budget, then the case numbers.
+// The numbers stand as they are, also when the campaigns with the format were dearer.
+function formatSentence(f) {
+  const pct = Math.round(Math.abs(f.effect));
+  const what = 'Bei gleichem Budget kosteten Kampagnen ' + f.label;
+  const head = !pct ? what + ' pro Lead genauso viel wie ohne'
+    : what + ' ' + pctText(pct, 0) + (f.effect > 0 ? ' mehr' : ' weniger') + ' pro Lead' +
+      (f.same ? ' – praktisch gleich' : f.level === 1 ? ' – noch kein klarer Unterschied' : '');
+  return head + '. ' + formatNum(f.nA) + ' gegen ' + plural(f.nB, 'Kampagne', 'Kampagnen') + '.';
 }
 
-// Talking head on top of the scenic reel: cost per lead of each campaign, medians, difference with range
-function talkingHeadHTML(th) {
-  const all = th.cplsA.concat(th.cplsB);
-  const lo = Math.min.apply(null, all) * 0.9, hi = Math.max.apply(null, all) * 1.05;
-  const pos = function(v) { return ((v - lo) / (hi - lo) * 100).toFixed(2) + '%'; };
-  // one euro scale under both rows; each campaign names itself on hover
+// Every campaign as a small dot on one euro scale, the median as the large one; names on hover
+function formatStripHTML(f, budget) {
+  const finite = f.unitsA.concat(f.unitsB).map(function(u) { return u.cpl; }).filter(Number.isFinite);
+  const lo = Math.min.apply(null, finite) * 0.9, hi = Math.max.apply(null, finite) * 1.05;
+  const pos = function(v) { return (Number.isFinite(v) ? Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100)) : 100).toFixed(2) + '%'; };
   const step = [1, 2, 5, 10, 20, 50, 100].filter(function(st) { return (hi - lo) / st <= 5; })[0] || 100;
   const ticks = [];
   for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) ticks.push('<span style="left:' + pos(v) + '">' + formatEUR(v) + '</span>');
-  const strip = function(label, units, median, n) {
-    return '<div class="xrow th"><span class="lb">' + escHtml(label) + '</span><span class="xplot">' +
-      units.map(function(u) {
-        return '<span class="dot sm" style="left:' + pos(u.cpl) + ';background:#F6B4AE"' + (u.name ? ' title="' + escHtml(u.name + ': ' + formatEUR(u.cpl) + ' pro Lead').replace(/"/g, '&quot;') + '"' : '') + '></span>';
-      }).join('') +
-      '<span class="dot" style="left:' + pos(median) + '" title="' + escHtml('Median: ' + formatEUR(median) + ' pro Lead') + '"></span></span>' +
-      '<span class="r xv"><b>' + formatEUR(median) + '</b><small>Median aus ' + plural(n, 'Kampagne', 'Kampagnen') + '</small></span></div>';
+  const attr = function(text) { return escHtml(text).replace(/"/g, '&quot;'); };
+  const row = function(label, side, units, median) {
+    return '<div class="fc-row"><span class="lb">' + label + '</span><span class="xplot ' + side + '">' + units.map(function(u) {
+      return '<span class="dot sm" style="left:' + pos(u.cpl) + '" title="' + attr(u.name + ': ' + (Number.isFinite(u.cpl) ? formatEUR(u.cpl) + ' pro Lead' : 'kein Lead bis ' + formatEUR(budget))) + '"></span>';
+    }).join('') + '<span class="dot" style="left:' + pos(median) + '" title="' + attr('Median: ' + cplText(median) + (Number.isFinite(median) ? ' pro Lead' : '')) + '"></span></span></div>';
   };
-  const unitsOf = function(units, cpls) { return units || cpls.map(function(v) { return { cpl: v }; }); };
-  const range = th.level === 3 ? ['95', th.ci95] : ['80', th.ci80];
-  const sentence = 'Kampagnen mit zusätzlichem Talking Head: ' + formatEUR(th.medianA) + ' pro Lead, nur szenisch: ' + formatEUR(th.medianB) + ', also ' +
-    signedPct(th.effect) + ' (' + range[0] + '-%-Spanne ' + signedPct(range[1][0]) + ' bis ' + signedPct(range[1][1]) + '); ' +
-    formatNum(th.nA) + ' gegen ' + plural(th.nB, 'Kampagne', 'Kampagnen') + '.';
-  const verdict = th.level >= 2
-    ? (th.effect < 0 ? 'Mit Talking Head waren die Kampagnen günstiger, die ganze Spanne liegt unter null.' : 'Mit Talking Head waren die Kampagnen teurer, die ganze Spanne liegt über null.')
-    : 'Die Spanne reicht über die Null: Ein klarer Unterschied zeigt sich noch nicht.';
-  return '<div class="card pad"><div class="card-h"><div><h3>Lohnt sich ein Talking Head zusätzlich?</h3><p>Abgeschlossene Objektkampagnen mit szenischem Reel, mit und ohne zusätzliches Talking-Head-Reel · Kosten pro Lead über die ganze Laufzeit</p></div>' +
-    certHTML(th.level) + '</div>' + strip('Mit Talking Head', unitsOf(th.unitsA, th.cplsA), th.medianA, th.nA) + strip('Nur szenisch', unitsOf(th.unitsB, th.cplsB), th.medianB, th.nB) +
-    '<div class="xrow th th-scale"><span></span><span class="range-scale">' + ticks.join('') + '</span><span class="r xv"><small>Kosten pro Lead</small></span></div>' +
-    '<p class="cx-text">' + escHtml(sentence + ' ' + verdict) + '</p>' +
-    '<p class="forest-note">Ein Vergleich zwischen Kampagnen, kein kontrollierter Test: Kampagnen mit Talking Head können sich auch in Objekt, Lage oder Budget unterscheiden. Kleine Punkte = einzelne Kampagnen, großer Punkt = Median.</p></div>';
+  return '<div class="fc-strip">' + row('Mit', 'a', f.unitsA, f.medianA) + row('Ohne', 'b', f.unitsB, f.medianB) +
+    '<div class="fc-row"><span></span><span class="range-scale">' + ticks.join('') + '</span></div></div>';
+}
+
+function formatCardHTML(f, budget) {
+  const stat = function(side, label, median) {
+    return '<div><span><i class="mk ' + side + '"></i>' + label + '</span><b>' + cplText(median) + '</b><small>Median pro Lead</small></div>';
+  };
+  return '<div class="card pad fc"><div class="card-h"><h3>Kampagnen ' + escHtml(f.label) + '</h3>' + certHTML(f.level) + '</div>' +
+    '<div class="gstats">' + stat('a', 'Mit', f.medianA) + stat('b', 'Ohne', f.medianB) + '</div>' +
+    '<p class="cx-text">' + escHtml(formatSentence(f)) + '</p>' + formatStripHTML(f, budget) + '</div>';
+}
+
+// Contents as one compact list under the format cards
+function tagListHTML(tags) {
+  return '<div class="card pad tg"><div class="card-h"><h3>Inhalte der Werbemittel</h3></div>' + tags.map(function(t) {
+    return '<div class="tg-row"><div class="nm"><b>' + escHtml(t.label) + '</b><span>' + escHtml(formatNum(t.nA) + ' gegen ' + plural(t.nB, 'Kampagne', 'Kampagnen')) + '</span></div>' +
+      '<div class="tg-r"><span class="tg-v">mit <b>' + cplText(t.medianA) + '</b><em> · </em>ohne <b>' + cplText(t.medianB) + '</b></span>' +
+      '<b class="tg-e' + (t.same || t.level < 2 ? ' muted' : '') + '">' + signedPct(t.effect) + '</b>' + certHTML(t.level) + '</div></div>';
+  }).join('') + '</div>';
+}
+
+// What the info next to the headline explains: the comparison, the budget, what counts as booked,
+// what is not in it, the stages and the ranges of the two formats
+function formatsTipHTML(cmp) {
+  const b = formatEUR(cmp.budget);
+  const missing = [cmp.short ? plural(cmp.short, 'Kampagne hat', 'Kampagnen haben') + ' ' + b + ' noch nicht erreicht' : '',
+    cmp.unknown ? plural(cmp.unknown, 'Kampagne hat', 'Kampagnen haben') + ' keine Angaben zu den Werbemitteln' : ''].filter(Boolean);
+  const ranges = cmp.formats.filter(function(f) { return f.level >= 1; }).map(function(f) {
+    return f.name + ' ' + signedPct(f.ci80[0]) + ' bis ' + signedPct(f.ci80[1]);
+  });
+  const part = function(title, lines) { return '<b>' + escHtml(title) + '</b>' + lines.map(function(l) { return '<p>' + escHtml(l) + '</p>'; }).join(''); };
+  return part('So vergleichen wir', [
+    'Ganze Kampagnen mit einem Format gegen Kampagnen ohne, jeweils auf den ersten ' + b + ' Budget. Einzelne Werbemittel taugen dafür nicht: ' +
+      'Meta verteilt das Budget in einer Kampagne selbst, und mit mehr Budget wird ein Lead teurer.',
+    'Gebucht heißt mindestens 30 € im Format. Szenisches Video: szenische Reels und andere Videos ohne Talking Head. Wirkungen auf die Marke sind nicht enthalten.'
+  ].concat(missing.length ? [missing.join(', ') + '; sie fehlen.'] : [])) +
+  part('Einordnung', ['Erste Einschätzung ab 12 Kampagnen mit je 4 mit und ohne, Tendenz bei klarer Spanne, belastbar ab 30 Kampagnen. Unter 5 % Unterschied: praktisch gleich.']
+    .concat(ranges.length ? ['Spanne (80 %): ' + ranges.join(', ') + '.'] : []));
+}
+
+// First section of the tab: talking head and scenic video, each with against without, and the
+// contents below. Only comparisons with 12 campaigns and 4 in each group appear; without any the
+// section is left out, without a placeholder.
+function formatsHTML(cmp) {
+  const cards = cmp.formats.filter(function(f) { return f.level >= 1; }), tags = cmp.tags.filter(function(f) { return f.level >= 1; });
+  if (!cards.length && !tags.length) return '';
+  return '<div class="sec-h base"><div class="sec-t"><h2>Welche Formate sich lohnen</h2>' + infoTipHTML('So vergleichen wir', formatsTipHTML(cmp)) + '</div></div>' +
+    (cards.length ? '<div class="grid' + (cards.length === 2 ? ' g-2' : '') + '">' + cards.map(function(f) { return formatCardHTML(f, cmp.budget); }).join('') + '</div>' : '') +
+    (tags.length ? '<div class="grid"' + (cards.length ? ' style="margin-top:14px"' : '') + '>' + tagListHTML(tags) + '</div>' : '');
 }
 
 const CORR_VIEW = Object.freeze(Object.assign(Object.create(null), {
