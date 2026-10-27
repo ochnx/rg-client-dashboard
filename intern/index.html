@@ -739,6 +739,8 @@
     .hv b { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-weight: 600; font-size: 15px; white-space: nowrap; }
     .hv small { display: block; margin-top: 1px; color: var(--muted); font-size: 12.5px; white-space: nowrap; }
     .hd { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+    /* a client without any campaign: one quiet line across the value columns */
+    .hv-none { grid-column: 3 / 9; color: var(--muted); font-size: 13.5px; }
     /* the agency's block: a name with its line, the time on the right */
     .hrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: center; padding: 11px 0; border-top: 1px solid var(--hair); }
     .card-h + .hrow { border-top: 0; padding-top: 0; }
@@ -748,6 +750,7 @@
       .lrow.hl { position: relative; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 16px; align-items: start; }
       .lrow.hl.head, .lrow.hl > .thumb { display: none; }
       .lrow.hl > .nm { grid-column: 1 / -1; padding-right: 28px; }
+      .lrow.hl > .hv-none { grid-column: 1 / -1; }
       /* the chevron of a row that opens its client, beside the name */
       .lrow.hl > .chev { position: absolute; top: 24px; right: 20px; }
       .lrow.hl .hv { text-align: left; }
@@ -759,6 +762,127 @@
     @media (max-width: 820px) {
       .lrow.hl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .lrow.hl > .chev { right: 16px; }
+    }
+    /* ---------- top bar: the logo leads home, menus for the client and the period (agency-menu.js) ---------- */
+    .rg-home { display: block; flex: none; padding: 0; border: 0; border-radius: 9px; background: none; cursor: pointer; transition: transform .15s ease-out, box-shadow .2s var(--ease); }
+    .rg-home:hover { box-shadow: 0 0 0 3px rgba(231,53,46,.12); }
+    .rg-home:active { transform: scale(.94); }
+    .rg-home:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    /* the native select stays in the page as the source of truth; the button beside it shows it */
+    select.mn-native { display: none !important; }
+    .mn-btn { border: 0; cursor: pointer; gap: 7px; padding: 0 10px 0 14px; color: var(--ink); transition: box-shadow .15s ease-out, background-color .15s ease-out; }
+    .mn-btn.lead { padding-left: 5px; }
+    .mn-btn:hover, .mn-btn.open { box-shadow: inset 0 0 0 1px rgba(60,20,15,.16); }
+    .mn-btn.open { background: #FFFCFB; }
+    .mn-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .mn-btn .mn-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .mn-btn .mn-c { width: 12px; height: 12px; flex: none; color: var(--muted); transition: transform .2s var(--ease); }
+    .mn-btn.open .mn-c { transform: rotate(180deg); }
+    .mn-btn .mn-bl { display: flex; flex: none; }
+    .mn-btn .mn-av { width: 24px; height: 24px; border-radius: 999px; }
+    .mn-btn .mn-av .i { width: 13px; height: 13px; }
+    .brand .mn-clientSwitch { flex: 0 1 auto; min-width: 0; max-width: 260px; }
+    /* the menu: OpenUI's menu surface in the portal's colours, rows concentric inside its corners */
+    .mn-pop { position: fixed; z-index: 60; box-sizing: border-box; padding: 6px; overflow-y: auto; overscroll-behavior: contain; border-radius: 16px; background: #fff;
+      box-shadow: 0 0 0 1px rgba(60,20,15,.08), 0 4px 12px -2px rgba(60,20,15,.06), 0 18px 36px -8px rgba(60,20,15,.16);
+      opacity: 0; transform: translateY(-4px) scale(.98); transition: opacity .14s ease-out, transform .22s var(--ease); }
+    .mn-pop.on { opacity: 1; transform: none; }
+    .mn-o { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 10px; border-radius: 10px; cursor: pointer; outline: none; color: var(--ink); }
+    .mn-o:focus { background: var(--fill); }
+    .mn-o .mn-x { flex: 1 1 auto; min-width: 0; }
+    .mn-o .mn-x b { display: block; font-size: 14px; font-weight: 500; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mn-o .mn-x small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.3; margin-top: 1px; }
+    .mn-o[aria-selected="true"] .mn-x b { font-weight: 600; }
+    .mn-o .mn-m { flex: none; font-size: 12.5px; color: var(--ink-2); }
+    .mn-o .mn-m .st { font-size: 12.5px; gap: 6px; }
+    .mn-o .mn-k { width: 15px; height: 15px; flex: none; color: var(--accent); visibility: hidden; }
+    .mn-o[aria-selected="true"] .mn-k { visibility: visible; }
+    .mn-l { display: flex; flex: none; }
+    .mn-av { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: #fff; flex: none; }
+    .mn-av .i { width: 15px; height: 15px; filter: drop-shadow(0 1px 2px rgba(90,10,10,.2)); }
+    .mn-av.all { background: var(--fill); color: var(--ink-2); }
+    .mn-av.all .i { filter: none; }
+    .mn-g { padding: 10px 10px 4px; color: var(--muted); font-size: 12px; font-weight: 500; letter-spacing: 0; }
+    .mn-sep { height: 1px; margin: 6px 4px; background: var(--hair); }
+    @media (pointer: coarse) {
+      .mn-o { min-height: 44px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .mn-pop { transition: none; transform: none; }
+      .mn-btn .mn-c { transition: none; }
+    }
+    @media (max-width: 560px) {
+      .brand .mn-clientSwitch { max-width: 100%; }
+      /* phones: the chips keep their names, the pictures stay in the menu */
+      .mn-btn .mn-bl { display: none; }
+      .mn-btn.lead { padding-left: 14px; }
+      /* the overview's scale: only its ends and "gleich" */
+      .fx-scale.ticks span:nth-child(2), .fx-scale.ticks span:nth-child(4) { display: none; }
+    }
+    /* ---------- Welche Formate sich lohnen in the page's own pieces (agency-formats.js) ---------- */
+    /* the clearest result: the Prediction Engine's result card, opening its sheet */
+    .fx-hero { cursor: pointer; transition: box-shadow .2s var(--ease); }
+    .fx-hero:hover { box-shadow: var(--shadow-hover); }
+    .fx-hero:focus-visible, .fx-card:focus-visible { outline: 2px solid rgba(231,53,46,.45); outline-offset: 2px; }
+    .fx-hero .huge { margin: 18px 0 6px; }
+    .fx-hero .huge-sub { margin-bottom: 4px; max-width: 520px; color: var(--ink-2); }
+    .fx-hero .lbl-t { text-wrap: balance; }
+    .fx-hero .tile .i, .fx-hero .tile { display: block; }
+    .fx-hero .side-stats { align-self: stretch; }
+    .fx-open { align-self: flex-end; margin-top: auto; font-size: 13.5px; }
+    /* the cards: those of Gerade live; contents three in a row */
+    .fx-grid { margin-top: 14px; }
+    .fx-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .fx-grid.c3 .ph { height: 112px; }
+    /* a narrow banner: the icon below the stage's badge */
+    .fx-grid.c3 .ph-k { top: 22px; }
+    .fx-card .badge-live { padding: 0 11px 0 10px; }
+    .fx-card .badge-live .cert { font-size: 12.5px; }
+    .fx-card .live-stats { margin-bottom: 10px; }
+    .fx-card .live-stats small, .s-kpi small { line-height: 1.35; }
+    .fx-card .live-stats small.pos, .s-kpi small.pos { color: var(--green); }
+    .fx-card .live-stats small.neg, .s-kpi small.neg { color: var(--warn-ink); }
+    .fx-card .live-f > span:first-child { color: var(--muted); }
+    .fx-card .link .i, .fx-open .i { width: 14px; height: 14px; }
+    .fx-grid.c3 .live-stats b { font-size: 20px; }
+    /* the small bars where a live card shows its days */
+    /* one grid for both rows, so their labels share one column as wide as the longer one and the bars start together */
+    .fx-mini { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; align-items: center; gap: 7px 12px; margin: 2px 0; font-size: 12.5px; }
+    .fx-mb { display: contents; }
+    .fx-ml { color: var(--muted); white-space: nowrap; }
+    .fx-mb .track { height: 8px; border-radius: 4px; }
+    .fx-mb .track i { border-radius: 4px; }
+    .fx-mv { text-align: right; font-weight: 600; font-size: 13px; color: var(--ink); white-space: nowrap; }
+    .fx-hero .fx-mini { margin-top: 18px; max-width: 520px; }
+    /* Inhalte der Werbemittel: a headline between the rows of cards */
+    .fx-sub { margin: 30px 0 0; }
+    .fx-sub h3 { margin: 0; font: 650 17px/1.3 var(--display); letter-spacing: -.014em; }
+    /* the sheet of a comparison: the campaign sheet's look */
+    .fx-sheet-hero { position: relative; overflow: hidden; height: 200px; }
+    .fx-sheet-hero .ph { position: absolute; inset: 0; }
+    .fx-sheet-hero:hover .ph-dither { opacity: .36; }
+    .fx-kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .fx-sc + .fx-sc { margin-top: 14px; }
+    .fx-sc .card-h { align-items: baseline; }
+    .fx-notes { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hair); }
+    .fx-notes p { margin: 0 0 6px; color: var(--ink-2); font-size: 13.5px; line-height: 1.5; }
+    .fx-how b { display: block; margin: 16px 0 6px; font-size: 15px; font-weight: 650; color: var(--ink); }
+    .fx-how b:first-child { margin-top: 0; }
+    .fx-how p { margin: 0 0 7px; color: var(--ink-2); font-size: 13.5px; line-height: 1.55; }
+    @media (max-width: 1060px) {
+      .fx-grid.c3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 820px) {
+      .fx-grid.c3 { grid-template-columns: minmax(0, 1fr); }
+      .fx-grid.c3 .ph { height: 112px; }
+    /* a narrow banner: the icon below the stage's badge */
+    .fx-grid.c3 .ph-k { top: 22px; }
+      .fx-hero .huge-sub, .fx-hero .fx-mini { max-width: none; }
+      .fx-open { align-self: flex-start; }
+    }
+    @media (max-width: 560px) {
+      /* phones: two figures to a row, so their lines under the value keep room */
+      .fx-card .live-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
     }
   </style>
 </head>
@@ -791,7 +915,7 @@
   <header class="top" id="topBar">
     <div class="wrap top-row">
       <div class="brand">
-        <img class="rg" src="../assets/rg-logo.png" alt="Run & Gun">
+        <button class="rg-home" id="agencyHome" type="button" aria-label="Zu Alle Kunden" title="Alle Kunden"><img class="rg" src="../assets/rg-logo.png" alt="Run & Gun"></button>
         <span class="sep"></span>
         <span id="navClientName" class="topnav-client"></span>
         <span id="navClientLogo" class="topnav-client" style="display:none;"></span>
@@ -3079,8 +3203,8 @@ function renderLive() {
   liveCharts.forEach(function(chart) { chart.destroy(); });
   liveCharts = [];
   const box = document.getElementById('liveGrid');
-  const lastDay = lastDataDay();
-  setText('liveNote', lastDay ? 'Stand ' + formatDateShort(lastDay) : '');
+  const lastDayAll = lastDataDay();
+  setText('liveNote', lastDayAll ? 'Stand ' + formatDateShort(lastDayAll) : '');
   const rows = buildProgramRows(allMetrics).filter(function(row) {
     return row.status === 'active' && inView(row.flights[0].id);
   });
@@ -3092,6 +3216,8 @@ function renderLive() {
   const series = [];
   box.innerHTML = rows.map(function(row, index) {
     const program = row.program;
+    // internal build: under Alle Kunden each card on its client's own last data day
+    const lastDay = agencyLastDayOf(program.id, lastDayAll);
     const kind = campaignKindOf(program);
     const active = row.flights.filter(function(flight) { return campaignStatus(flight) === 'active'; });
     const ids = new Set(active.map(function(flight) { return flight.id; }));
@@ -5867,7 +5993,7 @@ function campaignUnits(objects, creativeRows) {
     // stratum: the ad accounts of the campaign; first: its first delivery day (names the period)
     units.push({ id: o.id, name: o.name, programId: o.programId, spend: at.spend, leads: at.leads, until: at.date || null,
       cpl: at.leads > 0 ? at.spend / at.leads : Infinity, typeSpend: by[o.id].types, creatives: by[o.id].rows,
-      stratum: (o.accounts && o.accounts.length ? o.accounts : ['own']).join('+'), first: o.firstDelivery || '' });
+      stratum: agencyStratum(o, (o.accounts && o.accounts.length ? o.accounts : ['own']).join('+')), first: o.firstDelivery || '' });
   });
   const missing = known.length - units.length;
   const pending = known.filter(function(o) { return !intelAtBudget(o.series, budget) && (o.spendAll || 0) >= budget; }).length;
@@ -6392,6 +6518,7 @@ function destroyIntelCharts() {
   intelCharts = Object.create(null);
   // the forecast's dot field and its details belong to the session too
   releaseResultGrid();
+  agencyReleaseHero();
   _predInput = null;
 }
 
@@ -6484,7 +6611,7 @@ function renderIntelligence() {
   const cmp = intelComparisons();
   const gender = genderSplit(O, allDemoInsights), ages = ageShares(O, allDemoInsights), regions = homeRegionShares(O, allGeoInsights);
   // lead rule: the weekend is only compared inside one time zone
-  const alloc = budgetAllocation(data.creatives), weekend = leadRule ? weekendByTimezone(O) : weekendContrast(O);
+  const alloc = budgetAllocation(data.creatives), weekend = leadRule || agencyAll() ? weekendByTimezone(O) : weekendContrast(O);
   // only features with 12 properties are listed
   _corrStats = featureCorrelations(O).filter(function(c) { return c.shown; });
   if (_corrStats.length && !_corrStats.some(function(c) { return c.key === corrSelected; })) corrSelected = _corrStats[0].key;
@@ -6498,6 +6625,7 @@ function renderIntelligence() {
   renderCorrDetail();
   setupReveal(document.getElementById('tab-data-intel'));
   linkObjectRows(box);
+  agencyFormatsWire(box);
 }
 
 // The one line of the data basis on what is still waiting: comparisons in general below 12 objects;
@@ -6770,7 +6898,7 @@ function monthSpan(first, last) {
 
 // One label per stratum, its period; two strata in the same months are told apart by a number
 function strataLabels(strata) {
-  const base = strata.map(function(s) { return monthSpan(s.first, s.last); });
+  const base = strata.map(function(s) { return agencyStratumLabel(s, monthSpan(s.first, s.last)); });
   return base.map(function(l, i) {
     if (base.indexOf(l) === base.lastIndexOf(l)) return l;
     return l + ' (Werbekonto ' + base.slice(0, i + 1).filter(function(x) { return x === l; }).length + ')';
@@ -7058,7 +7186,7 @@ function formatsTipHTML(cmp) {
 // and between whole campaigns of the same account and period (12 campaigns with 4 in each group), and the
 // contents below. A content that splits the campaigns like a card's comparison (sameAs) is not repeated.
 // Without any the section is left out, without a placeholder.
-function formatsHTML(cmp) {
+function portalFormatsHTML(cmp) {
   const cards = cmp.formats.filter(function(f) { return f.level >= 1 || (f.within && f.within.level >= 1); });
   const tags = cmp.tags.filter(function(f) { return f.level >= 1 && !f.sameAs; });
   if (!cards.length && !tags.length) return '';
@@ -7168,13 +7296,12 @@ function accountTipHTML(a, names) {
 
 // One card: the client's account against the agency's, only for clients whose objects ran in both kinds of
 // account, and only from 12 campaigns with 4 in each (a.shown). title: the card's headline, under Alle Kunden
-// the client's name; the explanation sits behind the info next to it.
+// the client's name. A card of the same kind as the formats' (agencyFxCardHTML, Oskar 27.10.2026): the difference
+// with both accounts in euros, the months of each while they never ran at the same time, and Details opens its sheet
+// with the sentence, every campaign and the explanation.
 function accountHTML(a, names, title) {
   if (!a || !a.shown) return '';
-  const sum = accountSummary(a, names);
-  const parts = [sum.count].concat(sum.price ? [sum.price] : []);
-  return '<div class="card pad fc"><div class="card-h">' + headTipHTML('h3', title || 'Kampagnen nach Werbekonto', accountTipHTML(a, names), 'So vergleichen wir') + certHTML(a.level) + '</div>' +
-    '<p class="fc-sum"><b>' + escHtml(sum.head) + '</b><span class="parts">' + partsHTML(parts) + '</span></p>' + accountStripHTML(a, names) + '</div>';
+  return agencyFxCardHTML(agencyFxItems({ formats: [], tags: [], accounts: [{ a: a, names: names, title: title }] })[0]);
 }
 
 // After the formats: the section with one card per comparison shown ([{a, names, title}]); without any it is left out.
@@ -7183,7 +7310,312 @@ function accountsHTML(list) {
   const shown = (list || []).filter(function(x) { return x.a && x.a.shown; });
   if (!shown.length) return '';
   return secHeadHTML('Werbekonto', tipParas(['Kampagnen im Konto des Kunden gegenüber denen im Run & Gun-Konto, bei gleichem Budget. ' +
-    'Nur für Kunden, deren Kampagnen in beiden Konten liefen.'])) + '<div class="grid">' + shown.map(function(x) { return accountHTML(x.a, x.names, x.title); }).join('') + '</div>';
+    'Nur für Kunden, deren Kampagnen in beiden Konten liefen.'])) + '<div class="live-grid fx-grid">' + shown.map(function(x) { return accountHTML(x.a, x.names, x.title); }).join('') + '</div>';
+}
+
+// ---------- Welche Formate sich lohnen, in the page's own pieces (internal build only) ----------
+// Oskar, 27.10.2026, on the top of Data Intelligence: "grafisch schöner ... simpler ... die Essenzen noch besser
+// hervorheben ... mehr Dashboard-Charakter", every percentage as clear as from Kosten über die Laufzeit on, and on a
+// first draft with its own colours and boxes: the rest of the page "ist so sick designt ... diese Dither-Sachen sind
+// geil ... man hat Bock, sich da durchzuklicken"; the new part has to be made of that. So it is: the clearest result as
+// the Prediction Engine's result card (dot field, the number large, white side cards), every format, content and ad
+// account as a card of Gerade live (gradient banner with icon and dither, stage as the badge, three figures, small
+// bars, Details), and a click opens it as a sheet like a campaign's, with every campaign and how it is compared.
+// The numbers are the portal's (campaignComparisons, unchanged); build.py renames the portal's formatsHTML to
+// portalFormatsHTML and this one takes its place. Green and orange only in small words, as in the rest of the page.
+
+let _agencyFx = null;        // the comparisons of the section on screen, for its sheets
+let _agencyHeroGrid = null;  // the dot field of the clearest result
+
+// "Talking-Head-Anzeigen", "Szenische Videos": a format's ads at the start of a line
+function agencyCap(text) {
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
+}
+
+// The typical cost per lead with and without a format over the periods of a comparison between whole campaigns: per
+// side the weighted geometric mean of the periods' medians with the weights of intelStratifiedEffect, so the two values
+// give exactly the percentage shown; one period gives its two medians
+function agencyPair(f) {
+  let a = 0, b = 0, w = 0;
+  (f.strata || []).forEach(function(s) {
+    if (!(Number.isFinite(s.medianA) && s.medianA > 0 && Number.isFinite(s.medianB) && s.medianB > 0)) return;
+    a += s.weight * Math.log(s.medianA);
+    b += s.weight * Math.log(s.medianB);
+    w += s.weight;
+  });
+  return w > 0 ? { a: Math.exp(a / w), b: Math.exp(b / w) } : null;
+}
+
+// A result in the page's words: the percentage (inside the campaigns a median of Infinity or −100 % has none: the
+// format brought no lead in half the campaigns or more, or only it brought leads), its direction, and pos/neg for the
+// small coloured word (green cheaper, orange dearer, as "−28 % in 30 Tagen" in the list)
+function agencyEffect(effect, same) {
+  if (effect === Infinity) return { pct: 'kein Lead', word: 'in der Hälfte der Kampagnen', cls: 'neg' };
+  if (effect <= -100) return { pct: 'nur Format', word: 'brachte Leads', cls: 'pos' };
+  const pct = Math.round(effect);
+  if (same || !pct) return { pct: pct ? signedPct(pct) : '±0' + NB_PCT, word: 'praktisch gleich', cls: 'muted' };
+  return { pct: signedPct(pct), word: pct < 0 ? 'günstiger' : 'teurer', cls: pct < 0 ? 'pos' : 'neg' };
+}
+
+// The direction against what it is compared with: "günstiger als ohne", "praktisch gleich wie ohne"
+function agencyAgainst(v, what) {
+  return v.word + (v.cls === 'muted' ? ' wie ' : ' als ') + what;
+}
+
+// "8 % weniger", "17 % mehr", "etwa gleich viel"
+function agencyHowMuch(effect) {
+  const pct = Math.round(Math.abs(effect));
+  return !Number.isFinite(effect) || !pct ? 'etwa gleich viel' : pctText(pct, 0) + (effect > 0 ? ' mehr' : ' weniger');
+}
+
+const AGENCY_FX_ICONS = Object.freeze({ th: 'th', scene: 'scene', drone: 'drone', price: 'euro', location: 'pin', person: 'person', outside: 'outside', account: 'wallet' });
+const AGENCY_FX_KIND = Object.freeze({ format: 'Format', content: 'Inhalt', account: 'Werbekonto' });
+
+// Every comparison of the section as one item for its card, the clearest result and its sheet. A format's main result
+// is the comparison inside the campaigns, the fairest view (as in the portal); the one between whole campaigns follows.
+// rows: each shown comparison with the sentence that tells it in full, for the clearest result
+function agencyFxItems(cmp) {
+  const items = [];
+  cmp.formats.filter(function(f) { return f.level >= 1 || (f.within && f.within.level >= 1); }).forEach(function(f) {
+    const w = f.within && f.within.level >= 1 ? f.within : null, between = f.level >= 1, rows = [];
+    if (w) rows.push({ effect: w.effect, level: w.level, same: w.same, pair: null, split: w, ci80: w.ci80, facts: plural(w.n, 'Kampagne', 'Kampagnen'),
+      how: 'Kampagnen, in jeder ihre Anzeigen gegeneinander',
+      sentence: 'Leads über ' + f.ads + ' kosteten im Mittel ' + agencyHowMuch(w.effect) + ' als über die übrigen Anzeigen derselben Kampagne.' });
+    if (between) rows.push({ effect: f.effect, level: f.level, same: f.same, pair: agencyPair(f), labelA: 'mit', labelB: 'ohne', ci80: f.ci80,
+      facts: formatNum(f.nA) + ' gegen ' + plural(f.nB, 'Kampagne', 'Kampagnen'), how: 'Kampagnen bei gleichem Budget, im selben Werbekonto und Zeitraum',
+      sentence: 'Kampagnen ' + f.label + ' kosteten pro Lead ' + ((f.strata || []).length > 1 ? 'im Schnitt ' : '') + agencyHowMuch(f.effect) + ' als Kampagnen ohne.' });
+    items.push({ id: f.key, type: 'format', name: f.name, f: f, w: w, between: between, rows: rows,
+      level: Math.max.apply(null, rows.map(function(r) { return r.level; })),
+      line: w ? agencyCap(f.ads) + ' gegenüber den übrigen Anzeigen' : 'Kampagnen ' + f.label + ' gegenüber Kampagnen ohne' });
+  });
+  cmp.tags.filter(function(t) { return t.level >= 1 && !t.sameAs; }).forEach(function(t) {
+    items.push({ id: t.key, type: 'content', name: t.label, t: t, level: t.level, line: 'Kampagnen damit gegenüber Kampagnen ohne',
+      rows: [{ effect: t.effect, level: t.level, same: t.same, pair: agencyPair(t), labelA: 'mit', labelB: 'ohne', ci80: t.ci80,
+        facts: formatNum(t.nA) + ' gegen ' + plural(t.nB, 'Kampagne', 'Kampagnen'), how: 'Kampagnen bei gleichem Budget, im selben Werbekonto und Zeitraum',
+        sentence: 'Mit „' + t.label + '“ kostete ein Lead ' + ((t.strata || []).length > 1 ? 'im Schnitt ' : '') + agencyHowMuch(t.effect) + ' als in Kampagnen ohne.' }] });
+  });
+  (cmp.accounts || []).filter(function(x) { return x.a && x.a.shown; }).forEach(function(x) {
+    const a = x.a, s = a.strata[0], client = accountLabel(x.names.client), own = accountLabel(x.names.own);
+    items.push({ id: 'account-' + (x.title || x.names.client), type: 'account', name: x.title || 'Kampagnen nach Werbekonto', x: x, level: a.level, line: client + ' gegenüber dem ' + own,
+      rows: [{ effect: a.effect, level: a.level, same: a.same, pair: { a: s.medianA, b: s.medianB }, labelA: x.names.client, labelB: x.names.own, ci80: a.ci80,
+        facts: formatNum(a.nA) + ' gegen ' + plural(a.nB, 'Kampagne', 'Kampagnen'), how: 'Kampagnen bei gleichem Budget', sentence: accountSummary(a, x.names).head }] });
+  });
+  return items;
+}
+
+// A banner as the live cards carry it: a gradient of the brand's family and a white icon; the dither comes with
+// decorateBanners. Formats and contents in the reds of the objects, the ad accounts in the wine of the owners.
+function agencyFxBanner(item, extra) {
+  const style = kindStyle(item.type === 'account' ? 'eigentuemer' : 'objekt');
+  const g = style.gradients[seedIndex(item.id + '-fx', style.gradients.length)];
+  return '<div class="ph" style="background:radial-gradient(140% 110% at 12% 0%,' + g[0] + ' 0%,' + g[1] + ' 50%,' + g[2] + ' 100%)">' +
+    '<div class="ph-k"><span class="mi">' + agencyIcon(AGENCY_FX_ICONS[item.type === 'account' ? 'account' : item.id] || 'spark') + '</span></div>' + (extra || '') + '</div>';
+}
+
+// One figure of a card: label, value, a short line under it (coloured for the direction where given)
+function agencyStatHTML(label, value, sub, cls) {
+  return '<div><span>' + escHtml(label) + '</span><b>' + escHtml(value) + '</b>' + (sub ? '<small' + (cls ? ' class="' + cls + '"' : '') + '>' + escHtml(sub) + '</small>' : '') + '</div>';
+}
+
+// Two small bars where a live card shows its days, in its colours: with against without in euros (the dearer one sets
+// the scale), or inside the campaigns in how many it was cheaper and dearer. They grow in like the page's bars (data-w).
+function agencyMiniHTML(row) {
+  const style = kindStyle('objekt');
+  const bar = function(label, share, text, color) {
+    return '<div class="fx-mb"><span class="fx-ml">' + escHtml(label) + '</span><span class="track"><i data-w="' + share.toFixed(2) + '%" style="width:0;background:' + color + '"></i></span>' +
+      '<b class="fx-mv">' + escHtml(text) + '</b></div>';
+  };
+  if (row.split) {
+    const w = row.split, n = Math.max(1, w.n);
+    return '<div class="fx-mini">' + bar('günstiger', w.cheaper / n * 100, 'in ' + formatNum(w.cheaper), style.color) +
+      bar('teurer', w.dearer / n * 100, 'in ' + formatNum(w.dearer), style.light) + '</div>';
+  }
+  if (!row.pair) return '';
+  const top = Math.max(row.pair.a, row.pair.b);
+  return '<div class="fx-mini">' + bar(row.labelA, row.pair.a / top * 100, cplText(row.pair.a), style.color) + bar(row.labelB, row.pair.b / top * 100, cplText(row.pair.b), style.light) + '</div>';
+}
+
+// The card of one item, as a card of Gerade live: banner with the stage as its badge, name and what it compares, three
+// figures, the small bars, and a footer with the case numbers and Details. The whole card opens its sheet.
+function agencyFxCardHTML(item) {
+  const r0 = item.rows[0], v0 = agencyEffect(r0.effect, r0.same);
+  let stats, foot, mini;
+  if (item.type === 'format') {
+    const f = item.f, w = item.w, b = item.between ? item.rows[item.rows.length - 1] : null, vb = b && agencyEffect(b.effect, b.same);
+    stats = (w ? agencyStatHTML('In der Kampagne', v0.pct, agencyAgainst(v0, 'die übrigen Anzeigen'), v0.cls) : '') +
+      (b ? agencyStatHTML('Ganze Kampagnen', vb.pct, agencyAgainst(vb, 'ohne'), vb.cls) : '') +
+      (w && Number.isFinite(w.share) ? agencyStatHTML('Budgetanteil', pctText(Math.round(w.share * 100), 0), 'gab Meta ' + f.adsDat) : '') +
+      (!w && b && b.pair ? agencyStatHTML('Mit', cplText(b.pair.a), 'statt ' + cplText(b.pair.b) + ' ohne') : '');
+    mini = agencyMiniHTML(w ? r0 : b);
+    foot = w ? 'Von ' + plural(w.n, 'Kampagne', 'Kampagnen') + (b ? ' · ganze: ' + b.facts : '') : b.facts;
+  } else {
+    const a = item.type === 'account' ? item.x.a : null;
+    stats = agencyStatHTML('Unterschied', v0.pct, a ? v0.word + ' pro Lead' : agencyAgainst(v0, 'ohne'), v0.cls) +
+      agencyStatHTML(a ? r0.labelA : 'Mit', cplText(r0.pair.a), 'pro Lead') + agencyStatHTML(a ? r0.labelB : 'Ohne', cplText(r0.pair.b), 'pro Lead');
+    mini = agencyMiniHTML(r0);
+    foot = r0.facts + (a && !a.overlap ? ' · ' + monthSpan(a.client.first, a.client.last) + ' gegen ' + monthSpan(a.own.first, a.own.last)
+      : item.type === 'content' && item.t.strata.length > 1 ? ' · ' + plural(item.t.strata.length, 'Zeitraum', 'Zeiträume') : '');
+  }
+  return '<article class="card live fx-card" data-fx="' + attrText(item.id) + '" tabindex="0" role="button" aria-label="' + attrText(item.name + ': Details öffnen') + '">' +
+    agencyFxBanner(item, '<span class="badge-live">' + certHTML(item.level) + '</span>') +
+    '<div class="live-b"><div class="live-name"><div><b>' + escHtml(item.name) + '</b><span class="pl">' + escHtml(item.line) + '</span></div>' +
+      '<span class="kchip ' + (item.type === 'account' ? 'eigentuemer' : 'objekt') + '">' + AGENCY_FX_KIND[item.type] + '</span></div>' +
+    '<div class="live-stats">' + stats + '</div>' + mini +
+    '<div class="live-f"><span>' + escHtml(foot) + '</span><span class="link">Details' + agencyIcon('chev') + '</span></div></div></article>';
+}
+
+// The clearest result as the Prediction Engine's result card: the highest stage first, then the largest difference;
+// without a tendency anywhere the largest difference so far, said as such. Beside it the stage with its three bars (as
+// the data basis shows its lamps) and what was compared; the card opens the sheet of its comparison.
+function agencyHeroHTML(items) {
+  const all = [];
+  items.forEach(function(item) { item.rows.forEach(function(r) { if (!r.same && Number.isFinite(r.effect) && r.effect > -100) all.push({ item: item, r: r }); }); });
+  const best = all.sort(function(x, y) { return y.r.level - x.r.level || Math.abs(y.r.effect) - Math.abs(x.r.effect); })[0];
+  if (!best) return '';
+  const r = best.r, ci = r.ci80;
+  const bars = [1, 2, 3].map(function(k) { return '<i' + (k <= r.level ? ' style="background:var(--brand)"' : '') + '></i>'; }).join('');
+  return '<div class="card result fx-hero" data-fx="' + attrText(best.item.id) + '" tabindex="0" role="button" aria-label="' + attrText(best.item.name + ': Details öffnen') + '">' +
+    '<div class="result-fx" id="fxHeroFx" aria-hidden="true"></div><div class="result-in"><div>' +
+    '<div class="lbl"><span class="tile g-red">' + agencyIcon('spark') + '</span><span class="lbl-t">' + (r.level >= 2 ? 'Am deutlichsten' : 'Größter Unterschied bisher') +
+      ': ' + escHtml(best.item.name) + '</span></div>' +
+    '<div class="huge">' + escHtml(signedPct(Math.round(r.effect))) + '</div><div class="huge-sub">' + escHtml(r.sentence) + '</div>' + agencyMiniHTML(r) + '</div>' +
+    '<div class="side-stats"><div class="side-stat"><span>Einordnung</span><b>' + escHtml(CERT_WORDS[r.level]) + '</b>' +
+      (Array.isArray(ci) && Number.isFinite(ci[0]) && Number.isFinite(ci[1]) ? '<small>' + escHtml('Spanne (80 %) ' + signedPct(ci[0]) + ' bis ' + signedPct(ci[1])) + '</small>' : '') +
+      '<div class="conf">' + bars + '</div></div>' +
+    '<div class="side-stat"><span>Verglichen</span><b>' + escHtml(r.facts.replace(/ Kampagnen?$/, '')) + '</b><small>' + escHtml(r.how) + '</small></div>' +
+    '<span class="link fx-open">Alle Zahlen dazu' + agencyIcon('chev') + '</span></div></div></div>';
+}
+
+// The section: the clearest result, then the formats and the contents, each a row of cards; the portal's rules for what
+// is shown stay (a format from 12 campaigns, a content that repeats a format card left out). Without any comparison the
+// section is left out. The ad accounts follow in their own section (accountsHTML), as cards of the same kind.
+function formatsHTML(cmp) {
+  const items = agencyFxItems(cmp);
+  _agencyFx = { cmp: cmp, items: items };
+  const formats = items.filter(function(x) { return x.type === 'format'; }), contents = items.filter(function(x) { return x.type === 'content'; });
+  if (!formats.length && !contents.length) return '';
+  const hero = agencyHeroHTML(formats.concat(contents));
+  return secHeadHTML('Welche Formate sich lohnen', formatsTipHTML(cmp), 'So vergleichen wir') + (hero ? '<div class="grid">' + hero + '</div>' : '') +
+    (formats.length ? '<div class="live-grid fx-grid">' + formats.map(agencyFxCardHTML).join('') + '</div>' : '') +
+    (contents.length ? '<div class="fx-sub">' + headTipHTML('h3', 'Inhalte der Werbemittel', tipParas([
+      'Ganze Kampagnen, deren Werbemittel den Inhalt zeigten, gegenüber Kampagnen ohne, jeweils auf den ersten ' + formatEUR(cmp.budget) + ' Budget und nur im selben Werbekonto und Zeitraum.',
+      '„Mit“ und „Ohne“: typische Kosten pro Lead beider Seiten; über mehrere Zeiträume ihr gewichteter Schnitt, aus dem sich der Unterschied ergibt.'
+    ]), 'Info zu den Inhalten') + '</div><div class="live-grid fx-grid' + (contents.length >= 3 ? ' c3' : '') + '">' + contents.map(agencyFxCardHTML).join('') + '</div>' : '');
+}
+
+// After the tab is built: the banners get their dither, the clearest result its dot field (released with the tab's charts)
+function agencyFormatsWire(box) {
+  decorateBanners(box);
+  agencyReleaseHero();
+  const host = document.getElementById('fxHeroFx');
+  if (host) _agencyHeroGrid = DotGrid(host, { dotSize: 1.8, gap: 18, baseColor: '#F2DCD8', activeColor: '#E7352E', opacity: .7, proximity: 100, strength: .3, bounce: .35,
+    tension: .25, swell: .35, stretch: .15, glow: .15, fade: .4, clickShock: false, intro: false });
+}
+function agencyReleaseHero() {
+  if (_agencyHeroGrid && _agencyHeroGrid.destroy) _agencyHeroGrid.destroy();
+  _agencyHeroGrid = null;
+}
+
+// ---------- the sheet of a comparison ----------
+// Opened from a card like a campaign's sheet: the banner with its dither on top, title and what is compared, the key
+// figures, every campaign as a dot on the euro scale, and how it is compared in plain text. Its own element in the
+// sheet's look, so the campaign sheet and its history stay as they are; Escape, the backdrop, the close button and the
+// browser's back button close it.
+let _agencySheetOn = false;
+
+function agencySheetElement() {
+  let el = document.getElementById('agencySheet');
+  if (el) return el;
+  el = document.createElement('div');
+  el.id = 'agencySheet';
+  el.className = 'sheet-bg';
+  el.innerHTML = '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="agencySheetTitle"><div class="fx-sheet-hero"></div>' +
+    '<button class="modal-close" type="button" aria-label="Schließen"></button><div class="sheet-body"></div></div>';
+  el.addEventListener('click', function(e) { if (e.target === el || e.target.closest('.modal-close')) agencySheetDismiss(); });
+  document.body.appendChild(el);
+  return el;
+}
+
+function agencyKpiHTML(label, value, sub, cls) {
+  return '<div class="card s-kpi"><span>' + escHtml(label) + '</span><b>' + escHtml(value) + '</b>' + (sub ? '<small' + (cls ? ' class="' + cls + '"' : '') + '>' + escHtml(sub) + '</small>' : '') + '</div>';
+}
+
+// The sheet's body: title with the kind and the stage, the key figures, one card per comparison with its sentence and
+// every campaign, and how it is compared (the section's info as text)
+function agencySheetBodyHTML(item) {
+  const cmp = _agencyFx ? _agencyFx.cmp : null, kpis = [], cards = [];
+  const card = function(title, level, sentence, extra, body) {
+    return '<div class="card pad fx-sc"><div class="card-h"><h3>' + escHtml(title) + '</h3>' + (level ? certHTML(level) : '') + '</div>' +
+      (sentence ? '<p class="fc-sum"><b>' + escHtml(sentence) + '</b>' + (extra ? '<span>' + escHtml(extra) + '</span>' : '') + '</p>' : '') + body + '</div>';
+  };
+  if (item.type === 'format') {
+    const f = item.f, w = item.w;
+    if (w) {
+      const v = agencyEffect(w.effect, w.same), sum = withinSummary(f), notes = withinTipLines(f);
+      kpis.push(agencyKpiHTML('In derselben Kampagne', v.pct, agencyAgainst(v, 'die übrigen Anzeigen'), v.cls), agencyKpiHTML('Günstiger in', formatNum(w.cheaper), 'von ' + plural(w.n, 'Kampagne', 'Kampagnen')));
+      if (Number.isFinite(w.share)) kpis.push(agencyKpiHTML('Budgetanteil', pctText(Math.round(w.share * 100), 0), 'gab Meta ' + f.adsDat));
+      cards.push(card('In derselben Kampagne', w.level, sum.head, sum.share, withinStripHTML(f) + (notes.length ? '<div class="fx-notes">' + tipParas(notes) + '</div>' : '')));
+    }
+    if (item.between) {
+      const v = agencyEffect(f.effect, f.same), pair = agencyPair(f), sum = formatSummary(f);
+      kpis.push(agencyKpiHTML('Ganze Kampagnen', v.pct, agencyAgainst(v, 'ohne'), v.cls));
+      if (pair) kpis.push(agencyKpiHTML(agencyCap(f.label), cplText(pair.a), 'statt ' + cplText(pair.b) + ' ohne'));
+      cards.push(card('Ganze Kampagnen ' + f.label, f.level, sum.head, sum.parts.join(' · '), formatStripHTML(f, cmp.budget)));
+    }
+    cards.push('<div class="card pad fx-sc fx-how">' + formatsTipHTML(cmp) + '</div>');
+  } else if (item.type === 'content') {
+    const t = item.t, r = item.rows[0], v = agencyEffect(t.effect, t.same), sum = formatSummary(t);
+    kpis.push(agencyKpiHTML('Unterschied', v.pct, agencyAgainst(v, 'ohne'), v.cls));
+    if (r.pair) kpis.push(agencyKpiHTML('Mit', cplText(r.pair.a), 'pro Lead'), agencyKpiHTML('Ohne', cplText(r.pair.b), 'pro Lead'));
+    kpis.push(agencyKpiHTML('Kampagnen', formatNum(t.nA) + ' gegen ' + formatNum(t.nB), plural(t.strata.length, 'Zeitraum', 'Zeiträume')));
+    cards.push(card('Ganze Kampagnen mit „' + t.label + '“', t.level, sum.head, sum.parts.join(' · '), formatStripHTML(t, cmp.budget)));
+    cards.push('<div class="card pad fx-sc fx-how">' + formatsTipHTML(cmp) + '</div>');
+  } else {
+    const a = item.x.a, s = a.strata[0], names = item.x.names, v = agencyEffect(a.effect, a.same), sum = accountSummary(a, names);
+    kpis.push(agencyKpiHTML('Unterschied', v.pct, v.word + ' pro Lead', v.cls),
+      agencyKpiHTML(accountLabel(names.client), cplText(s.medianA), 'pro Lead, ' + plural(a.nA, 'Kampagne', 'Kampagnen')),
+      agencyKpiHTML(accountLabel(names.own), cplText(s.medianB), 'pro Lead, ' + plural(a.nB, 'Kampagne', 'Kampagnen')));
+    cards.push(card('Kampagnen nach Werbekonto', a.level, sum.head, [sum.count, sum.price].filter(Boolean).join(' · '), accountStripHTML(a, names)));
+    cards.push('<div class="card pad fx-sc fx-how">' + accountTipHTML(a, names) + '</div>');
+  }
+  return '<div class="sheet-title"><div><h2 id="agencySheetTitle">' + escHtml(item.name) + '</h2><p>' + escHtml(item.line) + '</p></div><div class="chips">' +
+    '<span class="kchip ' + (item.type === 'account' ? 'eigentuemer' : 'objekt') + '">' + AGENCY_FX_KIND[item.type] + '</span>' + certHTML(item.level) + '</div></div>' +
+    '<div class="s-kpis fx-kpis">' + kpis.join('') + '</div>' + cards.join('');
+}
+
+function agencyOpenFx(id) {
+  const item = _agencyFx && _agencyFx.items.filter(function(x) { return x.id === id; })[0];
+  if (!item) return;
+  const el = agencySheetElement();
+  const hero = el.querySelector('.fx-sheet-hero');
+  hero.innerHTML = agencyFxBanner(item, '');
+  decorateBanners(hero);
+  el.querySelector('.modal-close').innerHTML = agencyIcon('close');
+  const body = el.querySelector('.sheet-body');
+  body.innerHTML = agencySheetBodyHTML(item);
+  el.scrollTop = 0;
+  el.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if (!_agencySheetOn) history.pushState({ agencySheet: 1 }, '');
+  _agencySheetOn = true;
+  if (!REDUCED) {
+    Array.from(body.children).forEach(function(child, k) {
+      child.animate([{ opacity: 0, transform: 'translate3d(0,18px,0)' }, { opacity: 1, transform: 'none' }], { duration: 620, delay: 90 + k * 55, easing: REVEAL_EASE, fill: 'backwards' })
+        .onfinish = function() { this.cancel(); };
+    });
+  }
+  el.querySelector('.modal-close').focus({ preventScroll: true });
+}
+
+function agencySheetClose() {
+  const el = document.getElementById('agencySheet');
+  if (!el || !_agencySheetOn) return;
+  _agencySheetOn = false;
+  el.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function agencySheetDismiss() {
+  if (history.state && history.state.agencySheet) history.back(); else agencySheetClose();
 }
 
 // Each feature in plain words. steps: the steps a reader can picture, largest first ([per, in a sentence,
@@ -8162,6 +8594,7 @@ function agencyOpen(response) {
 
 // Logout: nothing of the session stays in memory or in the switcher
 function agencyClose() {
+  if (typeof agencySheetClose === 'function') agencySheetClose();
   _agency = null;
   _agencyView = AGENCY_ALL;
   _agencyOwners = Object.create(null);
@@ -8274,12 +8707,18 @@ function agencyClientRows(metrics, view, all, owner) {
     if (p.firstDay && (!r.firstDay || p.firstDay < r.firstDay)) r.firstDay = p.firstDay;
     if (p.lastDay && (!r.lastDay || p.lastDay > r.lastDay)) r.lastDay = p.lastDay;
   });
-  const from = last ? addDays(last, 1 - AGENCY_TREND_DAYS) : '', before = last ? addDays(last, 1 - 2 * AGENCY_TREND_DAYS) : '';
+  // each client's trend ends on its own last data day in view: a client whose data comes in later (shared
+  // accounts) is compared on its own last 30 days, not on days it has no data for yet (review 27.10.2026)
+  const lastOf = Object.create(null);
+  view.forEach(function(m) {
+    const entry = owner(m.campaign_id), day = String(m.date || '');
+    if (entry && by[entry.client_id] && parseDay(day) && day > (lastOf[entry.client_id] || '')) lastOf[entry.client_id] = day;
+  });
   all.forEach(function(m) {
+    const entry = inView(m.campaign_id) ? owner(m.campaign_id) : null, r = entry && by[entry.client_id], end = r && lastOf[entry.client_id];
     const day = String(m.date || '');
-    const entry = last && day >= before && day <= last && inView(m.campaign_id) ? owner(m.campaign_id) : null;
-    const r = entry && by[entry.client_id];
-    if (r) (day >= from ? r.now : r.before).push(m);
+    if (!end || day > end || day < addDays(end, 1 - 2 * AGENCY_TREND_DAYS)) return;
+    (day >= addDays(end, 1 - AGENCY_TREND_DAYS) ? r.now : r.before).push(m);
   });
   // each client's last day with delivery in view ends its weeks
   view.forEach(function(m) {
@@ -8303,6 +8742,10 @@ function agencyClientRows(metrics, view, all, owner) {
     r.cpl = costPerLead(r.cplSpend, r.leads, subset);
     const now = sumRows(r.now), before = sumRows(r.before);
     r.trend = now.leads >= MIN_SUBSET_LEADS && before.leads >= MIN_SUBSET_LEADS ? (now.cplSpend / now.leads) / (before.cplSpend / before.leads) * 100 - 100 : null;
+    // both sides of the trend in euros and its last day, for its hover (agencyTrendHTML)
+    r.trendNow = r.trend === null ? null : now.cplSpend / now.leads;
+    r.trendBefore = r.trend === null ? null : before.cplSpend / before.leads;
+    r.trendLast = lastOf[r.entry.client_id] || null;
     r.periodText = r.firstDay ? formatDateRange(r.firstDay, r.lastDay) : 'Keine Auslieferung';
     delete r.now; delete r.before; delete r.lastActive;
   });
@@ -8330,12 +8773,15 @@ function agencySetSort(field) {
 }
 
 // "−12 % in 30 Tagen" under the cost per lead, green when a lead got cheaper, orange when dearer (the colours of
-// the campaign list's comparison); "—" without enough leads on both sides
-function agencyTrendHTML(trend) {
-  if (trend === null) return '<span class="muted">—</span>';
-  const d = Math.round(trend);
-  return d === 0 ? '<span class="muted">wie davor</span>'
-    : '<span class="' + (d < 0 ? 'pos' : 'neg') + '">' + signedPct(d) + '<span class="zs"> in ' + AGENCY_TREND_DAYS + ' Tagen</span></span>';
+// the campaign list's comparison); "—" without enough leads on both sides. Its hover names both sides in euros, so
+// the percentage says what it is compared with (Oskar, 27.10.2026), up to the client's own last data day.
+function agencyTrendHTML(r) {
+  if (r.trend === null) return '<span class="muted">—</span>';
+  const d = Math.round(r.trend);
+  const title = 'Letzte ' + AGENCY_TREND_DAYS + ' Tage bis ' + formatDateShort(r.trendLast) + ': ' + formatEUR(r.trendNow) + ' pro Lead, ' +
+    AGENCY_TREND_DAYS + ' Tage davor: ' + formatEUR(r.trendBefore) + ' pro Lead';
+  return d === 0 ? '<span class="muted" title="' + attrText(title) + '">wie davor</span>'
+    : '<span class="' + (d < 0 ? 'pos' : 'neg') + '" title="' + attrText(title) + '">' + signedPct(d) + '<span class="zs"> in ' + AGENCY_TREND_DAYS + ' Tagen</span></span>';
 }
 
 // Leads per week as the live cards draw their days: small bars, the latest one in full colour
@@ -8377,12 +8823,13 @@ function agencyClientRowHTML(r, i) {
     '<span class="r c-leads" style="font-weight:600">' + formatNum(r.leads) + '</span>' +
     '<span class="r c-spend">' + formatEUR(r.spend) + '</span>' +
     '<div class="cpl r"><b>' + (r.cpl !== null ? formatEUR(r.cpl) : '—') + '</b>' +
-      (r.cpl === null && r.leads > 0 ? '<span class="muted">unter ' + MIN_SUBSET_LEADS + ' Leads</span>' : agencyTrendHTML(r.trend)) + '</div>' +
+      (r.cpl === null && r.leads > 0 ? '<span class="muted">unter ' + MIN_SUBSET_LEADS + ' Leads</span>' : agencyTrendHTML(r)) + '</div>' +
     '<span class="chev">' + I('chev') + '</span></div>';
 }
 
 // Part of renderDashboard: shown under Alle Kunden only
 function agencyRenderClients() {
+  agencyEnhanceSorts();
   agencyDestroyCharts();
   const wrap = document.getElementById('agencyClients');
   if (!wrap) return;
@@ -8395,8 +8842,8 @@ function agencyRenderClients() {
   setTip('agencyClientsTip', 'Info zu Kunden im Vergleich', tipParas([
     month ? 'Jeder Kunde, der im gewählten Monat ausgeliefert hat, mit den Kampagnen und Phasen, die darin liefen. Live, solange eine seiner Phasen läuft.'
       : 'Jeder Kunde mit seinen Kampagnen, gezählt wie in der Liste unten. Live, solange eine seiner Phasen läuft.',
-    data.last ? 'Unter den Kosten pro Lead: die letzten ' + AGENCY_TREND_DAYS + ' Tage bis ' + formatDateShort(data.last) + ' gegenüber den ' + AGENCY_TREND_DAYS +
-      ' Tagen davor, grün günstiger, orange teurer. Erst ab ' + MIN_SUBSET_LEADS + ' Leads in beiden Zeiträumen.' : '',
+    data.last ? 'Unter den Kosten pro Lead: die letzten ' + AGENCY_TREND_DAYS + ' Tage bis zum letzten Datentag des Kunden gegenüber den ' + AGENCY_TREND_DAYS +
+      ' Tagen davor, grün günstiger, orange teurer; die Euro-Werte stehen beim Darüberfahren. Erst ab ' + MIN_SUBSET_LEADS + ' Leads in beiden Zeiträumen.' : '',
     'Balken: Leads pro Kalenderwoche, bis zu ' + AGENCY_WEEKS + ' Wochen bis zur letzten Auslieferung des Kunden' + (month ? ' im Monat.' : '.'),
     'Ein Klick öffnet den Kunden.'
   ]));
@@ -8412,7 +8859,30 @@ function agencyRenderClients() {
   });
 }
 
+// Under Alle Kunden: the last data day of the client a program belongs to. Gerade live counts each card's last day on
+// it, so a client whose data comes in later (shared accounts) does not read as a day without delivery (review
+// 27.10.2026); in a client's view the page's own last data day.
+function agencyLastDayOf(id, fallback) {
+  const entry = agencyAll() ? agencyOwner(id) : null;
+  if (!entry) return fallback;
+  return (entry.campaign_daily_metrics || []).reduce(function(d, m) { return parseDay(m.date) && m.date > d ? m.date : d; }, '') || fallback;
+}
+
 // ---------- Data Intelligence and Prediction Engine under Alle Kunden ----------
+// Under Alle Kunden a comparison between whole campaigns stays inside one client: the agency's own ad account holds
+// the campaigns of several clients, with other properties, prices and periods (review 27.10.2026: one stratum held 7
+// clients). The stratum's key leads with its client; strataLabels names the client in front of its months.
+function agencyStratum(o, accounts) {
+  const client = o && o.property && o.property.agency_client;
+  return client ? client + '|' + accounts : accounts;
+}
+function agencyStratumLabel(s, months) {
+  const id = String(s.key || '').split('|');
+  if (id.length < 2 || !_agency) return months;
+  const entry = agencyEntries(_agency).filter(function(e) { return e.client_id === id[0]; })[0];
+  return entry ? agencyShortName(entry) + ' · ' + months : months;
+}
+
 // Both learn across all clients, but every client's objects are built on its own data and rules, exactly as its own
 // view builds them: its lead rule (with the rule only Formular phases count, as for E&V), its last data day (the
 // 7-day rule of running objects) and its campaigns. Part of intelData; in a client's view the portal's own build.
@@ -8605,11 +9075,14 @@ function agencyHealthRowHTML(entry, i, now, open) {
   const first = (entry.campaign_daily_metrics || []).reduce(function(d, m) { return parseDay(m.date) && (!d || m.date < d) ? m.date : d; }, '');
   const none = 'keine Werbemittel';
   const clicksSub = !h.impressions ? 'keine Impressionen' : h.measurable ? 'der Impressionen' : 'nur geteilte Konten';
-  return '<div class="lrow hl in' + (open ? '' : ' static') + '" style="--d:' + Math.min(i, 10) * 22 + 'ms"' + (open ? ' data-client="' + attrText(entry.client_id) + '" tabindex="0" role="button"' : '') + '>' +
+  const row = '<div class="lrow hl in' + (open ? '' : ' static') + '" style="--d:' + Math.min(i, 10) * 22 + 'ms"' + (open ? ' data-client="' + attrText(entry.client_id) + '" tabindex="0" role="button"' : '') + '>' +
     artHTML('objekt', null, entry.client_id, 'thumb', 'people') +
-    '<div class="nm"><b>' + escHtml(agencyName(entry)) + '</b><span>' + escHtml(first ? 'Daten ab ' + agencyDayText(first) : 'noch keine Daten') + '</span></div>' +
+    '<div class="nm"><b>' + escHtml(agencyName(entry)) + '</b><span>' + escHtml(first ? 'Daten ab ' + agencyDayText(first) : 'noch keine Daten') + '</span></div>';
+  // a client without any campaign yet: one line across the values instead of six dashes (Oskar, 27.10.2026)
+  if (!h.campaigns && !h.lastDay && !h.creatives) return row + '<div class="hv-none">Noch keine Kampagne im Reporting</div><span class="chev"></span></div>';
+  return row +
     agencyHealthCell('Daten bis', agencyDayText(h.lastDay), h.lastDay ? agencyDaysAgo(h.lastDay, today) : 'keine Daten', h.stale ? AGENCY_RED : '') +
-    agencyHealthCell('Neue Daten', agencyAgo(h.lastWrite, now), h.lastWrite ? agencyTimeText(h.lastWrite) : h.lastDay ? 'nur nachgeladen' : 'keine Daten', '') +
+    agencyHealthCell('Neue Daten', agencyAgo(h.lastWrite, now), h.lastWrite ? agencyTimeText(h.lastWrite) : h.lastDay ? 'nur nachträglich importiert' : 'keine Daten', '') +
     agencyHealthCell('Phasen live', h.campaigns ? formatNum(h.live) : '—', h.campaigns ? 'von ' + formatNum(h.campaigns) : 'keine Kampagnen', '') +
     agencyHealthCell('Klicks gemessen', agencyPct(h.clicks), clicksSub, h.fewClicks ? 'var(--amber)' : '') +
     agencyHealthCell('Mit Medien', agencyPct(h.mediaShare), h.creatives ? formatNum(h.media) + ' von ' + formatNum(h.creatives) : none, '') +
@@ -8678,6 +9151,287 @@ function renderHealth() {
   });
   setupReveal(document.getElementById('tab-health'));
 }
+
+// Icons of the agency build only: Phosphor Icons (MIT, phosphoricons.com)
+const AGENCY_ICONS = Object.freeze(Object.assign(Object.create(null), {
+  caret: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yMTYuNDksMTA0LjQ5bC04MCw4MGExMiwxMiwwLDAsMS0xNywwbC04MC04MGExMiwxMiwwLDAsMSwxNy0xN0wxMjgsMTU5bDcxLjUxLTcxLjUyYTEyLDEyLDAsMCwxLDE3LDE3WiIvPjwvc3ZnPg==',
+  check: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yMzIuNDksODAuNDlsLTEyOCwxMjhhMTIsMTIsMCwwLDEtMTcsMGwtNTYtNTZhMTIsMTIsMCwxLDEsMTctMTdMOTYsMTgzLDIxNS41MSw2My41MWExMiwxMiwwLDAsMSwxNywxN1oiLz48L3N2Zz4=',
+  calendar: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yMDgsMzJIMTg0VjI0YTgsOCwwLDAsMC0xNiwwdjhIODhWMjRhOCw4LDAsMCwwLTE2LDB2OEg0OEExNiwxNiwwLDAsMCwzMiw0OFYyMDhhMTYsMTYsMCwwLDAsMTYsMTZIMjA4YTE2LDE2LDAsMCwwLDE2LTE2VjQ4QTE2LDE2LDAsMCwwLDIwOCwzMlptMCw0OEg0OFY0OEg3MnY4YTgsOCwwLDAsMCwxNiwwVjQ4aDgwdjhhOCw4LDAsMCwwLDE2LDBWNDhoMjRaIi8+PC9zdmc+',
+  th: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0xOTguMTMsMjAyLjg1QTgsOCwwLDAsMSwxOTIsMjE2SDI0YTgsOCwwLDAsMS02LjEyLTEzLjE1YzE0Ljk0LTE3Ljc4LDMzLjUyLTMwLjQxLDU0LjE3LTM3LjE3YTY4LDY4LDAsMSwxLDcxLjksMEMxNjQuNiwxNzIuNDQsMTgzLjE4LDE4NS4wNywxOTguMTMsMjAyLjg1Wk0xOTYuODYsNjEuMzlhOCw4LDAsMCwwLTQuMjIsMTAuNSw5Mi4yNiw5Mi4yNiwwLDAsMSwwLDcyLjIyLDgsOCwwLDEsMCwxNC43Miw2LjI5LDEwOC4zNiwxMDguMzYsMCwwLDAsMC04NC44QTgsOCwwLDAsMCwxOTYuODYsNjEuMzlabTM5Ljg1LTguNTRhOCw4LDAsMSwwLTE0LjcsNi4zLDEyNC40MywxMjQuNDMsMCwwLDEsMCw5Ny43LDgsOCwwLDEsMCwxNC43LDYuMywxNDAuMzQsMTQwLjM0LDAsMCwwLDAtMTEwLjNaIi8+PC9zdmc+',
+  scene: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yMTYsNDBINDBBMTYsMTYsMCwwLDAsMjQsNTZWMjAwYTE2LDE2LDAsMCwwLDE2LDE2SDIxNmExNiwxNiwwLDAsMCwxNi0xNlY1NkExNiwxNiwwLDAsMCwyMTYsNDBaTTE4NCw1NmgzMlY3MkgxODRaTTcyLDIwMEg0MFYxODRINzJaTTcyLDcySDQwVjU2SDcyWm00OCwxMjhIODhWMTg0aDMyWm0wLTEyOEg4OFY1NmgzMlptNDgsMTI4SDEzNlYxODRoMzJabTAtMTI4SDEzNlY1NmgzMlptNDgsMTI4SDE4NFYxODRoMzJ2MTZaIi8+PC9zdmc+',
+  drone: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0xODkuNjYsNzcuNjYsMTYwLDEwNy4zMXY0MS4zOGwyOS42NiwyOS42NWE4LDgsMCwwLDEtMTEuMzIsMTEuMzJMMTQ4LjY5LDE2MEgxMDcuMzFMNzcuNjYsMTg5LjY2YTgsOCwwLDAsMS0xMS4zMi0xMS4zMkw5NiwxNDguNjlWMTA3LjMxTDY2LjM0LDc3LjY2QTgsOCwwLDAsMSw3Ny42Niw2Ni4zNEwxMDcuMzEsOTZoNDEuMzhsMjkuNjUtMjkuNjZhOCw4LDAsMCwxLDExLjMyLDExLjMyWm0tNDYuMjgtNi4xMmE4LDgsMCwwLDAsMTAuMjEtNC44NywyOCwyOCwwLDEsMSwzNS43NCwzNS43NEE4LDgsMCwwLDAsMTkyLDExOGE3Ljg2LDcuODYsMCwwLDAsMi42Ny0uNDYsNDQsNDQsMCwxLDAtNTYuMTYtNTYuMTZBOCw4LDAsMCwwLDE0My4zOCw3MS41NFptNTEuMjksNjdhOCw4LDAsMCwwLTUuMzQsMTUuMDgsMjgsMjgsMCwxLDEtMzUuNzQsMzUuNzQsOCw4LDAsMCwwLTE1LjA4LDUuMzQsNDQsNDQsMCwxLDAsNTYuMTYtNTYuMTZabS04Miw0NmE4LDgsMCwwLDAtMTAuMjEsNC44NywyOCwyOCwwLDEsMS0zNS43NC0zNS43NCw4LDgsMCwwLDAtNS4zNC0xNS4wOCw0NCw0NCwwLDEsMCw1Ni4xNiw1Ni4xNkE4LDgsMCwwLDAsMTEyLjYyLDE4NC40NlptLTUxLjI5LTY3QTcuODYsNy44NiwwLDAsMCw2NCwxMThhOCw4LDAsMCwwLDIuNjctMTUuNTQsMjgsMjgsMCwxLDEsMzUuNzQtMzUuNzQsOCw4LDAsMSwwLDE1LjA4LTUuMzQsNDQsNDQsMCwxLDAtNTYuMTYsNTYuMTZaIi8+PC9zdmc+',
+  person: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yMzAuOTMsMjIwYTgsOCwwLDAsMS02LjkzLDRIMzJhOCw4LDAsMCwxLTYuOTItMTJjMTUuMjMtMjYuMzMsMzguNy00NS4yMSw2Ni4wOS01NC4xNmE3Miw3MiwwLDEsMSw3My42NiwwYzI3LjM5LDguOTUsNTAuODYsMjcuODMsNjYuMDksNTQuMTZBOCw4LDAsMCwxLDIzMC45MywyMjBaIi8+PC9zdmc+',
+  outside: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yNTQuODgsMTk1LjkybC01NC41Ni05Mi4wOEExNS44NywxNS44NywwLDAsMCwxODYuNTUsOTZoMGExNS44NSwxNS44NSwwLDAsMC0xMy43Niw3Ljg0bC0xNS42NCwyNi4zOWE0LDQsMCwwLDAsMCw0LjA3bDI2LjgsNDUuNDdhOC4xMyw4LjEzLDAsMCwxLTEuODksMTAuNTUsOCw4LDAsMCwxLTExLjgtMi4yNkwxMDEuNzksNzEuODhhMTYsMTYsMCwwLDAtMjcuNTgsMEwxLjExLDE5NS45NGE4LDgsMCwwLDAsMSw5LjUyQTguMjMsOC4yMywwLDAsMCw4LjIzLDIwOEgyNDcuNzdhOC4yOSw4LjI5LDAsMCwwLDYuMDktMi41NUE4LDgsMCwwLDAsMjU0Ljg4LDE5NS45MlpNNjQuNDMsMTIwLDg4LDgwbDIzLjU3LDQwWk0xNDAsNTJhMjQsMjQsMCwxLDEsMjQsMjRBMjQsMjQsMCwwLDEsMTQwLDUyWiIvPjwvc3ZnPg==',
+  pin: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0xMjgsMTZhODguMSw4OC4xLDAsMCwwLTg4LDg4YzAsNzUuMyw4MCwxMzIuMTcsODMuNDEsMTM0LjU1YTgsOCwwLDAsMCw5LjE4LDBDMTM2LDIzNi4xNywyMTYsMTc5LjMsMjE2LDEwNEE4OC4xLDg4LjEsMCwwLDAsMTI4LDE2Wm0wLDU2YTMyLDMyLDAsMSwxLTMyLDMyQTMyLDMyLDAsMCwxLDEyOCw3MloiLz48L3N2Zz4=',
+  wallet: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yMTYsNjRINTZhOCw4LDAsMCwxLDAtMTZIMTkyYTgsOCwwLDAsMCwwLTE2SDU2QTI0LDI0LDAsMCwwLDMyLDU2VjE4NGEyNCwyNCwwLDAsMCwyNCwyNEgyMTZhMTYsMTYsMCwwLDAsMTYtMTZWODBBMTYsMTYsMCwwLDAsMjE2LDY0Wm0tMzYsODBhMTIsMTIsMCwxLDEsMTItMTJBMTIsMTIsMCwwLDEsMTgwLDE0NFoiLz48L3N2Zz4=',
+  spark: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yMDgsMTQ0YTE1Ljc4LDE1Ljc4LDAsMCwxLTEwLjQyLDE0Ljk0TDE0NiwxNzhsLTE5LDUxLjYyYTE1LjkyLDE1LjkyLDAsMCwxLTI5Ljg4LDBMNzgsMTc4bC01MS42Mi0xOWExNS45MiwxNS45MiwwLDAsMSwwLTI5Ljg4TDc4LDExMGwxOS01MS42MmExNS45MiwxNS45MiwwLDAsMSwyOS44OCwwTDE0NiwxMTBsNTEuNjIsMTlBMTUuNzgsMTUuNzgsMCwwLDEsMjA4LDE0NFpNMTUyLDQ4aDE2VjY0YTgsOCwwLDAsMCwxNiwwVjQ4aDE2YTgsOCwwLDAsMCwwLTE2SDE4NFYxNmE4LDgsMCwwLDAtMTYsMFYzMkgxNTJhOCw4LDAsMCwwLDAsMTZabTg4LDMyaC04VjcyYTgsOCwwLDAsMC0xNiwwdjhoLThhOCw4LDAsMCwwLDAsMTZoOHY4YTgsOCwwLDAsMCwxNiwwVjk2aDhhOCw4LDAsMCwwLDAtMTZaIi8+PC9zdmc+'
+}));
+
+// ---------- Top bar: the logo leads home, menus for the client and the period ----------
+// Oskar, 27.10.2026: "Wenn man oben links auf das Run & Gun-Logo klickt, dann sollte man automatisch wieder zu Alle
+// Kunden kommen." Home is Alle Kunden on the Reporting tab, from the top of the page; an open sheet closes first.
+async function agencyHome() {
+  if (!_agency) return;
+  agencyMenuClose(false);
+  if (document.getElementById('detailModal').classList.contains('open')) dismissSheet();
+  if (agencyAll()) switchTab('reporting'); // switchTab scrolls to the top
+  else await agencyOpenClient(AGENCY_ALL, 'reporting');
+}
+
+// An icon of the portal's own set (Phosphor) or of AGENCY_ICONS, whatever the client in view: the menus look the
+// same under every client, also under one whose view switches the portal's icons to its own brand's
+function agencyIcon(name) {
+  const src = Object.prototype.hasOwnProperty.call(AGENCY_ICONS, name) ? AGENCY_ICONS[name] : ICON_SETS.std[name];
+  return src ? '<span class="i" style="--m:url(' + src + ')" aria-hidden="true"></span>' : '';
+}
+
+// Oskar, 27.10.2026: "Bitte mach diese Menüs oben, wenn man auf Alle Kunden oder auf Gesamte Laufzeit klickt, schöner.
+// Die müssen sich irgendwie besser anfühlen." The native select stays the source of truth: the page reads its value,
+// its change event drives the page and the portal's code rebuilds its options, all as before. A button in the chip's
+// look shows it and opens a menu in the look of OpenUI's menu surface: a hairline ring with soft layered shadows,
+// rows that light up under the pointer, a check on the chosen one, small labels over the groups. Keys as in a
+// listbox: arrows, Home and End, Enter or Space to choose, Escape to close, letters jump to the next match.
+let _agencyMenuOpen = null; // { menu, pop, typed, typedAt }
+
+// select: the native select; items(): the menu's rows, { group } for a label, { sep: true } for a line, or
+// { value, label, sub, lead, meta, button } with lead and meta as markup and button the name on the button where it
+// differs from the row's; align: the menu's edge under the button ('start' or 'end'); minWidth: its least width in px
+function agencyMenu(select, items, align, minWidth) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'chip mn-btn mn-' + select.id;
+  button.setAttribute('aria-haspopup', 'listbox');
+  button.setAttribute('aria-expanded', 'false');
+  select.classList.add('mn-native');
+  select.tabIndex = -1;
+  select.setAttribute('aria-hidden', 'true');
+  select.after(button);
+  const menu = { select: select, button: button, items: items, align: align, minWidth: minWidth, name: select.getAttribute('aria-label') || '' };
+  // the portal sets the value in code (a switch keeps the month, a logout resets it): the button follows every set
+  const native = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  Object.defineProperty(select, 'value', { configurable: true, get: function() { return native.get.call(this); },
+    set: function(v) { native.set.call(this, v); agencyMenuSync(menu); } });
+  new MutationObserver(function() { agencyMenuSync(menu); }).observe(select, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+  select.addEventListener('change', function() { agencyMenuSync(menu); });
+  button.addEventListener('click', function() {
+    if (_agencyMenuOpen && _agencyMenuOpen.menu === menu) agencyMenuClose(true); else agencyMenuOpenFor(menu, 0);
+  });
+  button.addEventListener('keydown', function(e) {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    agencyMenuOpenFor(menu, e.key === 'ArrowUp' ? -1 : 0);
+  });
+  agencyMenuSync(menu);
+  return menu;
+}
+
+// The button shows the chosen row with its lead (the client's picture) and is hidden with its select; its name for
+// screen readers says what it chooses and what is chosen ("Kunde: Muster & Co.")
+function agencyMenuSync(menu) {
+  const value = menu.select.value;
+  const option = menu.select.selectedOptions[0];
+  const item = menu.items().filter(function(it) { return it.value !== undefined && it.value === value; })[0];
+  const text = item ? item.button || item.label : option ? option.textContent : '';
+  menu.button.innerHTML = (item && item.lead ? '<span class="mn-bl">' + item.lead + '</span>' : '') +
+    '<span class="mn-t">' + escHtml(text) + '</span><span class="mn-c">' + agencyIcon('caret') + '</span>';
+  menu.button.setAttribute('aria-label', menu.name + ': ' + text);
+  menu.button.classList.toggle('lead', Boolean(item && item.lead));
+  menu.button.hidden = menu.select.hidden || !menu.select.options.length;
+  if (menu.button.hidden && _agencyMenuOpen && _agencyMenuOpen.menu === menu) agencyMenuClose(false);
+}
+
+function agencyMenuOptions(pop) {
+  return Array.from(pop.querySelectorAll('.mn-o'));
+}
+
+// at: which row gets the focus, 0 the chosen one (or the first), -1 the last
+function agencyMenuOpenFor(menu, at) {
+  agencyMenuClose(false);
+  const value = menu.select.value;
+  const pop = document.createElement('div');
+  pop.className = 'mn-pop';
+  pop.setAttribute('role', 'listbox');
+  pop.setAttribute('aria-label', menu.select.getAttribute('aria-label') || '');
+  pop.innerHTML = menu.items().map(function(it) {
+    if (it.sep) return '<div class="mn-sep" role="separator"></div>';
+    if (it.group !== undefined) return '<div class="mn-g" role="presentation">' + escHtml(it.group) + '</div>';
+    const on = it.value === value;
+    return '<div class="mn-o" role="option" tabindex="-1" data-v="' + attrText(it.value) + '" aria-selected="' + on + '">' +
+      (it.lead ? '<span class="mn-l">' + it.lead + '</span>' : '') +
+      '<span class="mn-x"><b>' + escHtml(it.label) + '</b>' + (it.sub ? '<small>' + escHtml(it.sub) + '</small>' : '') + '</span>' +
+      (it.meta ? '<span class="mn-m">' + it.meta + '</span>' : '') + '<span class="mn-k">' + agencyIcon('check') + '</span></div>';
+  }).join('');
+  document.body.appendChild(pop);
+  _agencyMenuOpen = { menu: menu, pop: pop, typed: '', typedAt: 0 };
+  agencyMenuPlace();
+  menu.button.setAttribute('aria-expanded', 'true');
+  menu.button.classList.add('open');
+  pop.addEventListener('click', function(e) {
+    const row = e.target.closest('.mn-o');
+    if (row) agencyMenuPick(menu, row.dataset.v);
+  });
+  // the pointer and the keys share one highlight: the row under the pointer takes the focus
+  pop.addEventListener('pointermove', function(e) {
+    const row = e.target.closest('.mn-o');
+    if (row && document.activeElement !== row) row.focus({ preventScroll: true });
+  });
+  pop.addEventListener('keydown', agencyMenuKey);
+  const rows = agencyMenuOptions(pop);
+  const chosen = rows.filter(function(r) { return r.getAttribute('aria-selected') === 'true'; })[0];
+  const first = at < 0 ? rows[rows.length - 1] : chosen || rows[0];
+  if (first) {
+    first.focus({ preventScroll: true });
+    first.scrollIntoView({ block: 'nearest' });
+  }
+  requestAnimationFrame(function() { pop.classList.add('on'); });
+}
+
+// Under its button, inside the window with 16 px to spare; as tall as the window allows, scrolling inside
+function agencyMenuPlace() {
+  if (!_agencyMenuOpen) return;
+  const menu = _agencyMenuOpen.menu, pop = _agencyMenuOpen.pop;
+  const r = menu.button.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+  const width = Math.min(Math.max(r.width, menu.minWidth), vw - 32);
+  const left = Math.max(16, Math.min(menu.align === 'end' ? r.right - width : r.left, vw - 16 - width));
+  const top = r.bottom + 8;
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+  pop.style.width = width + 'px';
+  pop.style.maxHeight = Math.max(180, window.innerHeight - top - 16) + 'px';
+  pop.style.transformOrigin = (menu.align === 'end' ? 'right' : 'left') + ' top';
+}
+
+// refocus: give the focus back to the button (closed by a key or a choice), not when the pointer went elsewhere
+function agencyMenuClose(refocus) {
+  const open = _agencyMenuOpen;
+  if (!open) return;
+  _agencyMenuOpen = null;
+  open.pop.remove();
+  open.menu.button.setAttribute('aria-expanded', 'false');
+  open.menu.button.classList.remove('open');
+  if (refocus) open.menu.button.focus({ preventScroll: true });
+}
+
+function agencyMenuPick(menu, value) {
+  agencyMenuClose(true);
+  if (menu.select.value === value) return;
+  menu.select.value = value;
+  menu.select.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function agencyMenuKey(e) {
+  const open = _agencyMenuOpen;
+  if (!open) return;
+  const rows = agencyMenuOptions(open.pop), at = rows.indexOf(document.activeElement);
+  const go = function(i) {
+    const row = rows[Math.max(0, Math.min(rows.length - 1, i))];
+    if (row) { row.focus({ preventScroll: true }); row.scrollIntoView({ block: 'nearest' }); }
+  };
+  if (e.key === 'ArrowDown') { e.preventDefault(); go(at < 0 ? 0 : at + 1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); go(at < 0 ? rows.length - 1 : at - 1); }
+  else if (e.key === 'Home') { e.preventDefault(); go(0); }
+  else if (e.key === 'End') { e.preventDefault(); go(rows.length - 1); }
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (at >= 0) agencyMenuPick(open.menu, rows[at].dataset.v); }
+  else if (e.key === 'Escape') { e.preventDefault(); agencyMenuClose(true); }
+  else if (e.key === 'Tab') agencyMenuClose(true);
+  else if (e.key.length === 1 && !e.altKey && !e.ctrlKey && !e.metaKey) {
+    // letters: the next row whose name starts with what was typed in the last moment
+    const now = Date.now();
+    open.typed = (now - open.typedAt < 700 ? open.typed : '') + e.key.toLowerCase();
+    open.typedAt = now;
+    const names = rows.map(function(r) { return r.querySelector('.mn-x b').textContent.toLowerCase(); });
+    const from = open.typed.length > 1 ? Math.max(at, 0) : at + 1;
+    for (let k = 0; k < rows.length; k++) {
+      const i = (from + k) % rows.length;
+      if (names[i].indexOf(open.typed) === 0) { go(i); break; }
+    }
+  }
+}
+
+
+// A client's picture in the menu: the gradient its rows carry in the lists (artHTML), small, with the people icon
+function agencyMenuArt(id) {
+  const g = kindStyle('objekt').gradients[seedIndex(id, kindStyle('objekt').gradients.length)];
+  return '<span class="mn-av" style="background:radial-gradient(140% 110% at 12% 0%,' + g[0] + ' 0%,' + g[1] + ' 50%,' + g[2] + ' 100%)">' + agencyIcon('people') + '</span>';
+}
+
+// The client menu: Alle Kunden, then every client with campaigns by name, Live while one of its phases runs
+// (campaignStatus, as the lists decide it)
+function agencyClientItems() {
+  if (!_agency) return [];
+  const clients = agencyClients(_agency);
+  return [{ value: AGENCY_ALL, label: 'Alle Kunden', sub: plural(clients.length, 'Kunde', 'Kunden') + ' im Vergleich', lead: '<span class="mn-av all">' + agencyIcon('people') + '</span>' },
+    { sep: true }, { group: 'Kunden' }].concat(clients.map(function(entry) {
+    const live = (entry.campaigns || []).some(function(c) { return campaignStatus(c) === 'active'; });
+    return { value: entry.client_id, label: agencyName(entry), lead: agencyMenuArt(entry.client_id),
+      meta: live ? '<span class="st"><i style="background:' + STATUS_META.active.color + '"></i>Live</span>' : '' };
+  }));
+}
+
+// The period menu: Gesamte Laufzeit with the first month of data in view, then the months, newest first, under
+// their year
+function agencyPeriodItems() {
+  const select = document.getElementById('periodFilter');
+  const items = [], months = Array.from(select.options).filter(function(o) { return /^\d{4}-\d{2}$/.test(o.value); });
+  const first = months.length ? months[months.length - 1].value.split('-') : null;
+  items.push({ value: 'all', label: 'Gesamte Laufzeit', sub: first ? 'seit ' + MONTH_NAMES[parseInt(first[1], 10) - 1] + ' ' + first[0] : '',
+    lead: '<span class="mn-av all">' + agencyIcon('calendar') + '</span>' });
+  let year = '';
+  months.forEach(function(o) {
+    const parts = o.value.split('-');
+    if (parts[0] !== year) {
+      year = parts[0];
+      items.push({ group: year });
+    }
+    // the button names the month with its year, the menu without it under the year's label
+    items.push({ value: o.value, label: MONTH_NAMES[parseInt(parts[1], 10) - 1], button: o.textContent });
+  });
+  return items;
+}
+
+// The sort chips of the two lists take the same menu, so every chip of the page opens alike. They sit in the page's
+// main part, which every reset restores from its first markup (PRISTINE_MARKUP), so they take their menu again after
+// each render (agencyRenderClients runs in every renderDashboard).
+function agencyOptionItems(select) {
+  return function() { return Array.from(select.options).map(function(o) { return { value: o.value, label: o.textContent }; }); };
+}
+function agencyEnhanceSorts() {
+  if (typeof MutationObserver !== 'function') return;
+  ['agencySort', 'sortSelect'].forEach(function(id) {
+    const select = document.getElementById(id);
+    if (select && !select.classList.contains('mn-native')) agencyMenu(select, agencyOptionItems(select), 'end', 200);
+  });
+}
+
+// The agency's controls, once the page is there: the logo, the menus of the four chips and the rows of the formats'
+// overview. A progressive enhancement: where the browser lacks what the menus need (MutationObserver), the native
+// selects stay and the page works as before.
+function agencyInitUI() {
+  document.getElementById('agencyHome').addEventListener('click', agencyHome);
+  document.addEventListener('pointerdown', function(e) {
+    const open = _agencyMenuOpen;
+    if (open && !open.pop.contains(e.target) && !open.menu.button.contains(e.target)) agencyMenuClose(false);
+  }, true);
+  addEventListener('resize', function() { agencyMenuClose(false); }, { passive: true });
+  agencyMenu(document.getElementById('clientSwitch'), agencyClientItems, 'start', 320);
+  agencyMenu(document.getElementById('periodFilter'), agencyPeriodItems, 'end', 240);
+  agencyEnhanceSorts();
+  // a comparison's card and the clearest result open its sheet (agency-formats.js); the sheet closes on Escape and
+  // on the browser's back button
+  document.addEventListener('click', function(e) {
+    const card = e.target.closest && e.target.closest('[data-fx]');
+    if (card && !e.target.closest('.tipw')) agencyOpenFx(card.dataset.fx);
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && _agencySheetOn && !_tipOpen) { agencySheetDismiss(); return; }
+    const card = e.key === 'Enter' && e.target.closest && e.target.closest('[data-fx]');
+    if (card && e.target === card) agencyOpenFx(card.dataset.fx);
+  });
+  addEventListener('popstate', function(e) {
+    if (_agencySheetOn && !(e.state && e.state.agencySheet)) agencySheetClose();
+  });
+}
+if (typeof MutationObserver === 'function') agencyInitUI();
 
 // The login screen is the initial state. Access codes are never persisted.
 </script>
