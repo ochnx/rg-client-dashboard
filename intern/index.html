@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://lvhxabadywdqeepymwdm.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://lvhxabadywdqeepymwdm.supabase.co; media-src 'self' https://lvhxabadywdqeepymwdm.supabase.co; connect-src 'self' https://lvhxabadywdqeepymwdm.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
   <meta name="robots" content="noindex, nofollow">
   <title>Run & Gun · Agentur-Dashboard</title>
   <link rel="icon" type="image/png" href="../assets/rg-logo.png">
@@ -883,6 +883,101 @@
     @media (max-width: 560px) {
       /* phones: two figures to a row, so their lines under the value keep room */
       .fx-card .live-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
+    }
+    /* ---------- creative gallery (gallery.js): the ads themselves ---------- */
+    /* Oskar, 27.10.2026: nothing cut off. Every creative whole, framed on the banner's gradient under its dither */
+    .ph-media { position: absolute; inset: 15% 12%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .55s var(--ease), transform .7s var(--ease); }
+    .ph.has-media .ph-media { opacity: 1; }
+    .ph-media img { display: block; flex: none; width: auto; height: auto; max-width: 100%; max-height: 100%; border: 2px solid rgba(255,255,255,.92); border-radius: 9px; box-shadow: 0 10px 28px rgba(40,8,4,.32); opacity: 0; transition: opacity .5s var(--ease); }
+    .ph-media img.in { opacity: 1; }
+    /* a carousel: its further cards stand behind it */
+    .ph-media img.stack { box-shadow: 7px -7px 0 -2px rgba(255,255,255,.7), 14px -14px 0 -4px rgba(255,255,255,.4), 0 10px 28px rgba(40,8,4,.32); }
+    /* a row from the right: as many whole creatives as fit, the next ones wrap below the banner, out of sight */
+    .ph-media.row { inset: auto 16px; top: 15%; height: 70%; direction: rtl; flex-wrap: wrap; align-content: flex-start; justify-content: flex-start; gap: 1000px 10px; }
+    .ph-media.row img { height: 100%; max-width: none; max-height: none; border-radius: 8px; box-shadow: 0 8px 22px rgba(40,8,4,.3); }
+    #detailHero .ph-media.row, #galleryHero .ph-media.row { top: 26%; height: 62%; justify-content: center; }
+    /* Gerade live: the row stays right of the badge, which never covers a creative */
+    .live .ph-media.row { left: 38%; }
+    .ph-media.small { inset: 5px; }
+    .ph-media.small img { border-width: 1px; border-radius: 5px; box-shadow: 0 2px 6px rgba(40,8,4,.25); }
+    .ad-cards { position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; height: 24px; padding: 0 9px; border-radius: 999px; background: rgba(255,255,255,.94); color: var(--ink); font-size: 11.5px; font-weight: 600; }
+    .ph-k { transition: opacity .4s var(--ease); }
+    .ph.has-media .ph-k { opacity: 0; }
+    .live:hover .ph-media, .cr.opens:hover .ph-media, .cr.ad:hover .ph-media, #detailHero:not(.stage):hover .ph-media { transform: scale(1.025); }
+    .cr.opens, .cr.ad { cursor: pointer; }
+    .cr-open { display: flex; padding-top: 10px; margin-top: 12px; border-top: 1px solid var(--hair); font-size: 13px; }
+    .cr.opens:hover .link .i { transform: translateX(3px); }
+    /* the campaign sheet: one group per format, one card per ad */
+    .ad-groups { display: grid; gap: 22px; }
+    .ad-gh { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 14px; margin: 0 2px 10px; }
+    .ad-gt { display: inline-flex; align-items: center; gap: 7px; font: 650 15px/1.3 var(--display); letter-spacing: -.01em; color: var(--ink); }
+    .ad-gt .i { width: 17px; height: 17px; color: var(--ink-2); }
+    .ad-gs { color: var(--muted); font-size: 13px; }
+    .ad-gs b { color: var(--ink); font-weight: 650; }
+    .ads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .ads.wide { grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); }
+    .cr.ad .ph { aspect-ratio: 4 / 5; max-height: none; }
+    /* the creative keeps clear of the label above and the badges below */
+    .cr.ad .ph-media { inset: 19% 12% 17%; }
+    .cr.opens .ph-media { inset: 30% 12% 9%; }
+    .cr.ad .fmt { max-width: calc(100% - 24px); }
+    .cr.ad .fmt .ad-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ad-live { left: 12px; top: auto; bottom: 12px; height: 24px; padding: 0 9px; gap: 6px; font-size: 11.5px; }
+    .cr.ad .cp { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: -4px; }
+    .cr.ad .cr-m b { font-size: 17px; }
+    .ad-group:not(.all) .ad.more { display: none; }
+    .ad-more { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; height: 40px; margin-top: 12px; border: 0; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); color: var(--link); font-family: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: background-color .2s var(--ease); }
+    .ad-more:hover { background: var(--fill); }
+    .ad-more .i { width: 14px; height: 14px; transform: rotate(90deg); }
+    /* one ad: its video or carousel on a stage over its own blurred picture */
+    #galleryHero { position: relative; overflow: hidden; height: 200px; }
+    #galleryHero > .ph { position: absolute; inset: 0; }
+    #galleryHero:not(.stage):hover .ph-dither { opacity: .36; }
+    #galleryHero:not(.stage):hover .ph-media { transform: scale(1.025); }
+    #galleryHero.stage { height: clamp(320px, 62vh, 560px); background: #24100d; }
+    #galleryHero.stage .stage-bg { position: absolute; inset: 0; }
+    #galleryHero.stage .stage-bg::before { content: ""; position: absolute; inset: -48px; background: var(--poster) center / cover no-repeat; filter: blur(30px) saturate(1.2); transform: scale(1.08); opacity: 0; transition: opacity .7s var(--ease); }
+    #galleryHero.stage.has-media .stage-bg::before { opacity: .62; }
+    #galleryHero.stage.has-media .ph-k { opacity: 0; }
+    .stage-in { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 66px 70px 28px; }
+    .stage-in video { display: block; height: 100%; max-width: 100%; border-radius: 16px; background: #000; box-shadow: 0 20px 60px rgba(20,4,2,.5); }
+    .stage-track { display: flex; gap: 12px; height: 100%; max-width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+    /* a carousel uses the whole width with room above and below for the shadows; each card stands alone in the
+       middle (--pad and the gap from gallery.js), its neighbours beyond the edges */
+    .stage-in.wide { padding: 66px 0 50px; }
+    .stage-in.wide .stage-track { width: 100%; max-width: none; height: calc(100% + 96px); margin: -48px 0; padding: 48px var(--pad, 16px); scroll-padding-inline: var(--pad, 16px); }
+    .stage-track::-webkit-scrollbar { display: none; }
+    .stage-track img { display: block; flex: none; height: 100%; width: auto; max-width: 100%; object-fit: contain; border-radius: 14px; scroll-snap-align: center; box-shadow: 0 14px 36px rgba(20,4,2,.38); }
+    .stage-count { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: rgba(255,255,255,.94); color: var(--ink); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .stage-nav { position: absolute; top: 50%; z-index: 1; width: 38px; height: 38px; margin-top: -19px; padding: 10px; border: 0; border-radius: 50%; background: rgba(255,255,255,.94); color: var(--ink); cursor: pointer; box-shadow: 0 4px 14px rgba(60,10,5,.2); transition: background-color .2s var(--ease), transform .14s ease; }
+    .stage-nav:hover { background: #fff; }
+    .stage-nav:active { transform: scale(.94); }
+    .stage-nav.prev { left: 16px; }
+    .stage-nav.prev .i { transform: rotate(180deg); }
+    .stage-nav.next { right: 16px; }
+    .s-kpis.ad-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .ad-about { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+    .ad-quote { margin: 10px 0 0; font: 650 21px/1.38 var(--display); letter-spacing: -.016em; color: var(--ink); }
+    .ad-about .facts { margin: 12px 0 0; }
+    .ad-frames, .ad-text { margin-top: 14px; }
+    .frames { display: grid; grid-auto-flow: column; grid-auto-columns: 82px; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+    .frames figure { margin: 0; }
+    .frames img { display: block; width: 100%; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 10px; background: var(--fill); }
+    .frames figcaption { margin-top: 5px; text-align: center; color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+    .ad-text p { margin: 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.62; white-space: pre-wrap; }
+    @media (max-width: 820px) {
+      .ads { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .s-kpis.ad-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      #galleryHero.stage { height: clamp(280px, 58vh, 460px); }
+      .stage-in { padding: 58px 56px 20px; }
+    }
+    @media (max-width: 560px) {
+      .ads, .ads.wide { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .ad-live { left: 8px; bottom: 8px; }
+      .stage-in { padding: 58px 12px 48px; }
+      .stage-nav { top: auto; bottom: 6px; margin-top: 0; width: 34px; height: 34px; padding: 9px; }
+      .ad-about { grid-template-columns: minmax(0, 1fr); }
+      .ad-quote { font-size: 18px; }
     }
   </style>
 </head>
@@ -2292,6 +2387,7 @@ async function attemptLogin() {
     }
 
     agencyOpen(payload);
+    galleryStart(token);
     document.getElementById('tokenInput').value = '';
     await loadDashboard();
   } catch (e) {
@@ -2307,6 +2403,7 @@ async function attemptLogin() {
 
 function logout() {
   if (!_agencySwitching) agencyClose();
+  if (!_agencySwitching) galleryClear(); // the gallery's code and media links end with a real logout
   _healthLoaded = false;
   clientData = null;
   dashboardPayload = null;
@@ -2360,6 +2457,7 @@ function resetDashboardViews() {
   destroyIntelCharts();
   _corrStats = [];
   corrSelected = 'price';
+  galleryOwnsSheet = false; // the sheet's markup comes back below
   Object.keys(PRISTINE_MARKUP).forEach(function(id) {
     document.getElementById(id).innerHTML = PRISTINE_MARKUP[id];
   });
@@ -2851,12 +2949,681 @@ function creativeCardsHTML(list, kind, seed) {
     const icon = Object.prototype.hasOwnProperty.call(FORMAT_ICONS, key) ? FORMAT_ICONS[key] : 'image';
     // lead rule: the way of the leads where creative rows carry it and some came over the website
     const via = t.split && t.website > 0 ? ' · ' + splitText(t) : '';
-    return '<div class="card cr">' + artHTML(kind, null, seed + key, '', icon).replace('</div></div>',
+    return '<div class="card cr" data-type="' + escHtml(t.type).replace(/"/g, '&quot;') + '">' + artHTML(kind, null, seed + key, '', icon).replace('</div></div>',
         '</div><span class="fmt">' + I(icon) + escHtml(formatCreativeType(t.type)) + '</span></div>') +
       '<div class="cr-b"><div class="cp">' + formatNum(t.count) + (t.count === 1 ? ' Anzeige' : ' Anzeigen') + escHtml(via) + '</div>' +
       '<div class="cr-m"><span><b>' + budgetShareText(t.share) + '</b> des\u00a0Budgets</span><span><b style="font-size:15px">' + formatNum(t.leads) + '</b>' + (t.leads === 1 ? ' Lead' : ' Leads') + '</span></div>' +
       '<span class="track"><i data-w="' + (t.share * 100).toFixed(1) + '%" style="width:0;background:' + kindStyle(kind).color + '"></i></span></div></div>';
   }).join('');
+}
+
+// ============================================
+// CREATIVE GALLERY
+// ============================================
+// Oskar, 27.10.2026: "Die Werbemittelgalerie auf jeden Fall": the ads themselves next to their results,
+// their pictures in the banners, one card per creative in the campaign sheet and a sheet of its own with
+// the video or every card of a carousel. Media never travel in the dashboard payload: the page asks the
+// media endpoint only for the creatives it is about to show, with this session's code, and gets links
+// that work for a short while for exactly those creatives. Without an answer every place keeps its
+// gradient art and the format cards, so the page reads as before.
+//
+// Endpoint: POST {p_token, ids} → {media: {<creative id>: {name, opening, content, poster, thumb,
+// images[], video, width, height, duration, frames[{t, url}], cuts{per_min, shot_s}, transcript}}};
+// a creative the code may not see is simply absent.
+const GALLERY_URL = SB_URL + '/functions/v1/creative-media';
+const GALLERY_BATCH = 60;
+const GALLERY_KEEP = 5 * 3600e3; // the links live 6 hours: after 5 a creative is asked for again
+const GALLERY_RETRY = 30e3;      // a request that failed may be repeated after 30 seconds
+const GALLERY_ORIGINS = Object.freeze([new URL(SB_URL).origin, location.origin]);
+let galleryToken = null;        // this session's code, in memory only, for the media endpoint
+let galleryMedia = new Map();   // creative id → { m: its media or null, at: when, failed }
+let galleryWaiting = new Map(); // creative id → the request that brings it
+let galleryNext = null;         // the ids asked for in this moment, sent together
+let galleryEpoch = 0;           // answers of an earlier session never land in a later one
+let galleryOwnsSheet = false;   // the sheet shows a creative or a gallery instead of its campaign
+
+function galleryStart(token) {
+  galleryClear();
+  galleryToken = token || null;
+}
+function galleryClear() {
+  galleryEpoch++;
+  galleryToken = null;
+  galleryMedia = new Map();
+  galleryWaiting = new Map();
+  galleryNext = null;
+}
+// text in an attribute: escHtml leaves quotes as they are (Oskar's ad names come from Meta, anyone with access
+// to an ad account can write them)
+function galleryAttr(value) {
+  return escHtml(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// only links to the media store (or this page's own origin in the local preview) ever become a source
+function galleryUrl(value) {
+  if (typeof value !== 'string' || !value) return null;
+  try {
+    const url = new URL(value, location.href);
+    return /^https?:$/.test(url.protocol) && GALLERY_ORIGINS.indexOf(url.origin) >= 0 ? url.href : null;
+  } catch (e) { return null; }
+}
+function galleryText(value, max) {
+  return typeof value === 'string' ? value.trim().slice(0, max) : '';
+}
+function galleryClean(m) {
+  if (!m || typeof m !== 'object') return null;
+  const poster = galleryUrl(m.poster);
+  if (!poster) return null;
+  const urls = function(list, max) { return Array.isArray(list) ? list.map(galleryUrl).filter(Boolean).slice(0, max) : []; };
+  const frames = Array.isArray(m.frames) ? m.frames.map(function(f) {
+    return f && typeof f === 'object' ? { t: finiteNumberOrNull(f.t), url: galleryUrl(f.url) } : null;
+  }).filter(function(f) { return f && f.url && f.t !== null; }).slice(0, 24) : [];
+  const cuts = m.cuts && typeof m.cuts === 'object' ? m.cuts : {};
+  return {
+    name: galleryText(m.name, 200), opening: galleryText(m.opening, 400), content: galleryText(m.content, 200),
+    poster: poster, thumb: galleryUrl(m.thumb) || poster, images: urls(m.images, 12),
+    video: galleryUrl(m.video), width: finiteNumberOrNull(m.width), height: finiteNumberOrNull(m.height),
+    duration: finiteNumberOrNull(m.duration), frames: frames,
+    cuts: { perMin: finiteNumberOrNull(cuts.per_min), shot: finiteNumberOrNull(cuts.shot_s) },
+    transcript: galleryText(m.transcript, 8000)
+  };
+}
+
+// The media of these creatives, in their order (null where there are none). A creative is asked for once
+// while its links live; everything asked for in the same moment goes out in one request (60 ids each).
+function galleryCached(id) {
+  const e = galleryMedia.get(id);
+  return e ? e.m : null;
+}
+function galleryFresh(id, now) {
+  const e = galleryMedia.get(id);
+  return Boolean(e) && now - e.at < (e.failed ? GALLERY_RETRY : GALLERY_KEEP);
+}
+function gallerySend() {
+  const batch = galleryNext;
+  galleryNext = null;
+  if (!batch) return;
+  const epoch = galleryEpoch, token = galleryToken;
+  const chunks = [];
+  for (let i = 0; i < batch.ids.length; i += GALLERY_BATCH) chunks.push(batch.ids.slice(i, i + GALLERY_BATCH));
+  Promise.all(chunks.map(function(chunk) {
+    return fetch(GALLERY_URL, { method: 'POST', headers: SB_HEADERS, body: JSON.stringify({ p_token: token, ids: chunk }) })
+      .then(function(res) { return res.ok ? res.json() : null; })
+      .catch(function() { return null; })
+      .then(function(body) {
+        if (epoch !== galleryEpoch) return;
+        const at = Date.now();
+        const media = body && body.media && typeof body.media === 'object' ? body.media : null;
+        chunk.forEach(function(id) {
+          galleryWaiting.delete(id);
+          galleryMedia.set(id, media ? { m: Object.prototype.hasOwnProperty.call(media, id) ? galleryClean(media[id]) : null, at: at }
+            : { m: null, at: at, failed: true });
+        });
+      });
+  })).then(batch.done);
+}
+function galleryLoad(ids) {
+  const want = Array.from(new Set((ids || []).filter(Boolean)));
+  const epoch = galleryEpoch, now = Date.now();
+  if (galleryToken) {
+    want.forEach(function(id) {
+      if (galleryFresh(id, now) || galleryWaiting.has(id)) return;
+      if (!galleryNext) {
+        let done;
+        galleryNext = { ids: [], promise: new Promise(function(resolve) { done = resolve; }) };
+        galleryNext.done = done;
+        setTimeout(gallerySend, 0);
+      }
+      galleryNext.ids.push(id);
+      galleryWaiting.set(id, galleryNext.promise);
+    });
+  }
+  return Promise.all(want.map(function(id) { return galleryWaiting.get(id); })).then(function() {
+    return (ids || []).map(function(id) { return id && epoch === galleryEpoch ? galleryCached(id) : null; });
+  });
+}
+
+// ---------- which ads ----------
+// The ads of some campaigns with budget, by their share of it (Meta's own split), over the whole runtime
+function galleryCreatives(campaignIds) {
+  const ids = new Set(campaignIds);
+  return allCreatives.filter(function(c) { return ids.has(c.campaign_id) && c.metrics && c.metrics.spend > 0; })
+    .sort(function(a, b) { return b.metrics.spend - a.metrics.spend || b.metrics.leads - a.metrics.leads || (a.id < b.id ? -1 : 1); });
+}
+// First and last delivery day of every ad with budget
+function galleryDays() {
+  const days = Object.create(null);
+  allCreativeDailyMetrics.forEach(function(m) {
+    if (!(parseFloat(m.spend) > 0) || !m.date) return;
+    const d = days[m.creative_id] || (days[m.creative_id] = { first: m.date, last: m.date });
+    if (m.date < d.first) d.first = m.date;
+    if (m.date > d.last) d.last = m.date;
+  });
+  return days;
+}
+// What runs now comes first: budget over the last 7 delivery days of these campaigns, then the whole runtime
+function galleryCurrent(campaignIds) {
+  const list = galleryCreatives(campaignIds);
+  const own = new Set(list.map(function(c) { return c.id; }));
+  let last = '';
+  allCreativeDailyMetrics.forEach(function(m) { if (own.has(m.creative_id) && parseFloat(m.spend) > 0 && m.date > last) last = m.date; });
+  if (!last) return list;
+  const from = addDays(last, -6), recent = Object.create(null);
+  allCreativeDailyMetrics.forEach(function(m) {
+    if (own.has(m.creative_id) && m.date >= from) recent[m.creative_id] = (recent[m.creative_id] || 0) + (parseFloat(m.spend) || 0);
+  });
+  return list.slice().sort(function(a, b) { return (recent[b.id] || 0) - (recent[a.id] || 0) || b.metrics.spend - a.metrics.spend; });
+}
+// An ad runs while its campaign is live and it delivered on that campaign's last delivery day
+function galleryLiveSet(list, days) {
+  const campaignLast = Object.create(null);
+  list.forEach(function(c) { const d = days[c.id]; if (d && (!campaignLast[c.campaign_id] || d.last > campaignLast[c.campaign_id])) campaignLast[c.campaign_id] = d.last; });
+  const byId = Object.create(null);
+  campaigns.forEach(function(c) { byId[c.id] = c; });
+  return new Set(list.filter(function(c) {
+    const campaign = byId[c.campaign_id], d = days[c.id];
+    return campaign && campaignStatus(campaign) === 'active' && d && d.last === campaignLast[c.campaign_id];
+  }).map(function(c) { return c.id; }));
+}
+
+// ---------- creatives as their content ----------
+// Oskar, 27.10.2026: "gefühlt 40 Carousels, aber es sind im Grunde 2, 3 Carousels": Meta runs one carousel
+// as several ads (one per ad set). The gallery shows each piece of content once, with the budget, leads
+// and impressions of all its ads together; its name and media are those of its biggest ad.
+function galleryUnits(list, found) {
+  const byKey = new Map(), units = [];
+  list.forEach(function(c, i) {
+    const m = found[i];
+    const key = m && m.content ? c.creative_type + '|' + m.content : 'ad|' + c.id;
+    let u = byKey.get(key);
+    if (!u) {
+      u = { key: key, lead: c, media: m, ads: [], spend: 0, leads: 0, impressions: 0 };
+      byKey.set(key, u);
+      units.push(u);
+    }
+    u.ads.push(c);
+    u.spend += c.metrics.spend;
+    u.leads += c.metrics.leads;
+    u.impressions += c.metrics.impressions;
+  });
+  return units.sort(function(a, b) { return b.spend - a.spend || b.leads - a.leads; });
+}
+// The content of some campaigns, for a banner: each piece once, what runs now first
+function galleryContent(list) {
+  const ids = list.slice(0, 24).map(function(c) { return c.id; });
+  return galleryLoad(ids).then(function(found) {
+    const seen = new Set();
+    return found.filter(function(m) {
+      if (!m) return false;
+      if (m.content && seen.has(m.content)) return false;
+      if (m.content) seen.add(m.content);
+      return true;
+    });
+  });
+}
+
+// ---------- names ----------
+// "TH 8 // Mehr dazu // FFM" → "Talking Head 8": the part before the first "//", its format in words
+const GALLERY_NAMES = Object.freeze([[/^th[\s-]*reel\b/i, 'Talking Head'], [/^th\b/i, 'Talking Head'], [/^scn[\s-]*reel\b/i, 'Szenen-Reel'],
+  [/^carousel\b/i, 'Carousel'], [/^karussell\b/i, 'Carousel'], [/^single[\s-]*image\b/i, 'Einzelbild'], [/^video\b/i, 'Video']]);
+function galleryName(creative, media) {
+  const raw = media && media.name ? media.name.split('//')[0].trim() : '';
+  if (!raw) return formatCreativeType(creative.creative_type);
+  for (let i = 0; i < GALLERY_NAMES.length; i++) {
+    if (GALLERY_NAMES[i][0].test(raw)) {
+      const rest = raw.replace(GALLERY_NAMES[i][0], '').trim();
+      return rest ? GALLERY_NAMES[i][1] + ' ' + rest : GALLERY_NAMES[i][1];
+    }
+  }
+  return raw;
+}
+const GALLERY_PLURALS = Object.freeze(Object.assign(Object.create(null), {
+  th_reel: 'Talking-Head-Reels', scn_reel: 'Szenen-Reels', carousel: 'Carousels', karussell: 'Carousels', single_image: 'Einzelbilder', video: 'Videos', reel: 'Reels'
+}));
+function galleryFormatTitle(type) {
+  const key = String(type || '').toLowerCase();
+  return GALLERY_PLURALS[key] || formatCreativeType(type);
+}
+function galleryIcon(type) {
+  const key = String(type || '').toLowerCase();
+  return Object.prototype.hasOwnProperty.call(FORMAT_ICONS, key) ? FORMAT_ICONS[key] : 'image';
+}
+function galleryGradient(kind, seed) {
+  const style = kindStyle(kind);
+  const g = style.gradients[seedIndex(seed, style.gradients.length)];
+  return 'radial-gradient(140% 110% at 12% 0%,' + g[0] + ' 0%,' + g[1] + ' 50%,' + g[2] + ' 100%)';
+}
+
+// ---------- pictures in banners ----------
+// Oskar, 27.10.2026: "Es sieht immer komisch aus, wenn so Creatives abgeschnitten sind." Every creative shows
+// whole, framed on the banner's gradient under its dither: one in the middle (single), a carousel with its
+// further cards stacked behind it, or a row of them (row) where those that would not fit whole wrap out of
+// sight. The gradient and its icon stay until the pictures arrive and wherever there are none.
+function galleryLayer(ph, media, mode) {
+  if (!ph || !ph.isConnected || ph.querySelector('.ph-media') || !media.length) return;
+  const row = mode === 'row';
+  const layer = document.createElement('div');
+  layer.className = 'ph-media ' + (row ? 'row' : mode === 'thumb' ? 'small' : 'one');
+  layer.setAttribute('aria-hidden', 'true');
+  (row ? media.slice(0, 12) : media.slice(0, 1)).forEach(function(m) {
+    const img = document.createElement('img');
+    img.alt = '';
+    img.decoding = 'async';
+    img.src = mode === 'thumb' ? m.thumb : m.poster;
+    // a carousel shows that there is more: its further cards stand behind it
+    if (!row && mode !== 'thumb' && m.images.length > 1) img.className = 'stack';
+    // every picture fades in as it arrives; one that fails leaves alone, the layer only with the last one
+    const arrived = function() { img.classList.add('in'); ph.classList.add('has-media'); };
+    if (img.complete && img.naturalWidth) arrived();
+    else img.addEventListener('load', arrived, { once: true });
+    img.addEventListener('error', function() { img.remove(); if (!layer.firstChild) layer.remove(); }, { once: true });
+    layer.appendChild(img);
+  });
+  ph.insertBefore(layer, ph.firstChild);
+}
+function galleryPaint(ph, list, mode) {
+  if (!ph || !list || !list.length) return;
+  const epoch = galleryEpoch;
+  galleryContent(mode === 'row' ? list : list.slice(0, 1)).then(function(media) {
+    if (epoch === galleryEpoch) galleryLayer(ph, media, mode);
+  });
+}
+
+// Gerade live: each card's banner shows the content its running phases deliver now
+function galleryLive(box, rows) {
+  box.querySelectorAll('.live').forEach(function(card) {
+    const row = rows[Number(card.dataset.row)];
+    if (!row) return;
+    const running = row.flights.filter(function(f) { return campaignStatus(f) === 'active'; }).map(function(f) { return f.id; });
+    galleryPaint(card.querySelector('.ph'), galleryCurrent(running), 'row');
+  });
+}
+// Main page "Werbemittel": every format card shows its biggest creative in view and opens all of the format
+function galleryFormats(container, group, kind) {
+  const ids = campaigns.filter(function(c) { return group.filter(c.id); }).map(function(c) { return c.id; });
+  const all = galleryCreatives(ids);
+  container.querySelectorAll('.cr[data-type]').forEach(function(card) {
+    const type = card.dataset.type;
+    const list = all.filter(function(c) { return (c.creative_type || 'sonstige') === type; });
+    if (!list.length) return;
+    card.classList.add('opens');
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', 'Alle ' + galleryFormatTitle(type) + ' ansehen');
+    const more = document.createElement('div');
+    more.className = 'cr-open';
+    more.innerHTML = '<span class="link">Alle ansehen' + I('chev') + '</span>';
+    card.querySelector('.cr-b').appendChild(more);
+    const open = function() { openSheet({ type: 'gallery', format: type, ids: ids, kind: kind }); };
+    card.onclick = open;
+    card.onkeydown = function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
+    galleryPaint(card.querySelector('.ph'), list, 'single');
+  });
+}
+// the campaign list: each row's thumb shows its campaign's biggest creative
+function galleryThumb(div, campaignIds) {
+  galleryPaint(div.querySelector('.ph.thumb'), galleryCreatives(campaignIds), 'thumb');
+}
+// the sheet's head: the content of the campaign or phase in view
+function galleryCampaignHero() {
+  const hero = document.getElementById('detailHero');
+  galleryPaint(hero && hero.querySelector('.ph'), galleryCurrent(currentDetailCampaignIds), 'row');
+}
+
+// ---------- creative cards ----------
+// One card per piece of content: its picture, its share of the budget and its leads; no rank and no cost
+// per lead per creative (Oskar, 26.10.2026: Meta distributes the budget itself). The bar is the share of
+// the budget. In a gallery across campaigns (context: its campaign) a share means nothing: the card shows
+// its budget, the bar against the biggest one there (total: that one's budget).
+function galleryCardHTML(u, total, kind, live, context) {
+  const c = u.lead;
+  const share = total > 0 ? u.spend / total : 0;
+  const icon = galleryIcon(c.creative_type);
+  const money = context ? '<span><b>' + formatEUR(u.spend) + '</b></span>' : '<span><b>' + budgetShareText(share) + '</b> des Budgets</span>';
+  return '<article class="card cr ad" data-unit="' + galleryAttr(u.key) + '" tabindex="0" role="button" aria-label="' + galleryAttr(galleryName(c, u.media) + ' öffnen') + '">' +
+    '<div class="ph" style="background:' + galleryGradient(kind, c.id) + '"><div class="ph-k"><span class="mi">' + I(icon) + '</span></div>' +
+      '<span class="fmt">' + I(icon) + '<span class="ad-n">' + escHtml(galleryName(c, u.media)) + '</span></span>' +
+      (live ? '<span class="badge-live ad-live"><i class="live-dot"></i>Live</span>' : '') +
+      (u.media && u.media.images.length > 1 ? '<span class="ad-cards">' + formatNum(u.media.images.length) + ' Karten</span>' : '') + '</div>' +
+    '<div class="cr-b">' + (context ? '<div class="cp">' + escHtml(context) + '</div>' : '') +
+      '<div class="cr-m">' + money + '<span><b>' + formatNum(u.leads) + '</b>' + (u.leads === 1 ? ' Lead' : ' Leads') + '</span></div>' +
+      '<span class="track"><i data-w="' + (share * 100).toFixed(1) + '%" style="width:0;background:' + kindStyle(kind).color + '"></i></span></div></article>';
+}
+// every card carries its picture and opens its creative
+function galleryWire(container, units, from) {
+  const byKey = new Map(units.map(function(u) { return [u.key, u]; }));
+  container.querySelectorAll('.ad').forEach(function(card) {
+    const u = byKey.get(card.dataset.unit);
+    if (!u) return;
+    const open = function() { openSheetChild({ type: 'creative', id: u.lead.id, ads: u.ads.map(function(c) { return c.id; }), from: from }); };
+    card.onclick = open;
+    card.onkeydown = function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
+    if (u.media) galleryLayer(card.querySelector('.ph'), [u.media], 'single');
+  });
+}
+function galleryLiveUnit(u, live) {
+  return u.ads.some(function(c) { return live.has(c.id); });
+}
+// a group shows its first creatives (a gallery of one format its first 24); the rest open in place, all of
+// them still in the order of their budget
+const GALLERY_FIRST = 8;
+const GALLERY_FIRST_WIDE = 24;
+function galleryCardsHTML(units, first, card) {
+  return units.map(function(u, i) {
+    const html = card(u);
+    return i >= first ? html.replace('<article class="card cr ad"', '<article class="card cr ad more"') : html;
+  }).join('');
+}
+function galleryMoreHTML(count, first, label) {
+  return count > first ? '<button type="button" class="ad-more">Alle ' + formatNum(count) + ' ' + escHtml(label) + ' zeigen' + I('chev') + '</button>' : '';
+}
+function galleryMoreWire(container) {
+  container.querySelectorAll('.ad-more').forEach(function(btn) {
+    btn.onclick = function() {
+      const group = btn.closest('.ad-group');
+      group.classList.add('all');
+      btn.remove();
+      growBars(group);
+    };
+  });
+}
+
+// The campaign sheet's "Werbemittel": one group per format, by its share of the budget, each with its
+// content once. It waits for the media (it groups by them); without any it keeps the format cards.
+function galleryRenderSheet(container, campaignIds, kind, fallback) {
+  const list = galleryCreatives(campaignIds);
+  const mine = {}, epoch = galleryEpoch;
+  container.$gallery = mine;
+  container.replaceChildren();
+  galleryLoad(list.map(function(c) { return c.id; })).then(function(found) {
+    if (container.$gallery !== mine || !container.isConnected || epoch !== galleryEpoch) return;
+    if (!found.some(Boolean)) { container.className = 'creatives c3'; fallback(); return; }
+    const units = galleryUnits(list, found);
+    const total = units.reduce(function(s, u) { return s + u.spend; }, 0);
+    const live = galleryLiveSet(list, galleryDays());
+    const groups = [], byType = Object.create(null);
+    units.forEach(function(u) {
+      const type = u.lead.creative_type || 'sonstige';
+      if (!byType[type]) groups.push(byType[type] = { type: type, units: [], spend: 0, leads: 0 });
+      byType[type].units.push(u);
+      byType[type].spend += u.spend;
+      byType[type].leads += u.leads;
+    });
+    groups.sort(function(a, b) { return b.spend - a.spend || b.leads - a.leads; });
+    container.className = 'ad-groups';
+    container.innerHTML = groups.map(function(g) {
+      const share = total > 0 ? g.spend / total : 0;
+      return '<section class="ad-group"><div class="ad-gh"><span class="ad-gt">' + I(galleryIcon(g.type)) + escHtml(galleryFormatTitle(g.type)) + '</span>' +
+        '<span class="ad-gs"><b>' + budgetShareText(share) + '</b> des Budgets · <b>' + formatNum(g.leads) + '</b> ' + (g.leads === 1 ? 'Lead' : 'Leads') + ' · ' +
+          plural(g.units.length, 'Werbemittel', 'Werbemittel') + '</span></div>' +
+        '<div class="ads">' + galleryCardsHTML(g.units, GALLERY_FIRST, function(u) { return galleryCardHTML(u, total, kind, galleryLiveUnit(u, live), ''); }) + '</div>' +
+        galleryMoreHTML(g.units.length, GALLERY_FIRST, galleryFormatTitle(g.type)) + '</section>';
+    }).join('');
+    growBars(container);
+    galleryWire(container, units, campaignIds);
+    galleryMoreWire(container);
+  });
+}
+
+// ---------- sheet levels of their own ----------
+// A creative and a gallery open inside the sheet like a phase, one level deeper. They get a head and a
+// body of their own; the campaign's stay in place, hidden, so whatever the campaign still loads (its
+// audience, its chart) lands there, and they show again when the stack returns to the campaign.
+function galleryTakeSheet() {
+  const sheet = document.querySelector('#detailModal .sheet');
+  let hero = document.getElementById('galleryHero'), body = document.getElementById('galleryBody');
+  if (!hero) {
+    hero = document.createElement('div');
+    hero.id = 'galleryHero';
+    sheet.insertBefore(hero, document.getElementById('detailHero'));
+  }
+  if (!body) {
+    body = document.createElement('div');
+    body.id = 'galleryBody';
+    body.className = 'sheet-body';
+    sheet.appendChild(body);
+  }
+  document.getElementById('detailHero').hidden = true;
+  document.getElementById('detailBody').hidden = true;
+  sheet.setAttribute('aria-labelledby', 'galleryTitle');
+  galleryOwnsSheet = true;
+}
+// a closed sheet leaves no video playing behind it
+function galleryStop() {
+  document.querySelectorAll('#galleryHero video').forEach(function(v) { v.pause(); v.removeAttribute('src'); v.load(); });
+}
+function galleryReturnSheet() {
+  if (!galleryOwnsSheet) return;
+  ['galleryHero', 'galleryBody'].forEach(function(id) { const el = document.getElementById(id); if (el) el.remove(); });
+  document.getElementById('detailHero').hidden = false;
+  document.getElementById('detailBody').hidden = false;
+  document.querySelector('#detailModal .sheet').setAttribute('aria-labelledby', 'detailTitle');
+  galleryOwnsSheet = false;
+}
+function galleryShowLevel(level) {
+  galleryTakeSheet();
+  if (level.type === 'gallery') galleryFormatSheet(level); else galleryCreativeSheet(level);
+  // a gallery may be the first level, opened from the page: the sheet arrives as the campaign sheet does
+  const modal = document.getElementById('detailModal');
+  const opening = !modal.classList.contains('open');
+  modal.classList.add('open');
+  if (opening) revealSheet();
+  modal.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+}
+
+// where a creative ran: its campaign, and how many more when the same content ran in several
+function galleryUnitPlace(ads) {
+  const ids = Array.from(new Set(ads.map(function(c) { return c.campaign_id; })));
+  const first = galleryCampaignTitle(ids[0]);
+  return ids.length > 1 ? first + ' und ' + plural(ids.length - 1, 'weitere Kampagne', 'weitere Kampagnen') : first;
+}
+function galleryCampaignTitle(campaignId) {
+  const campaign = campaigns.find(function(c) { return c.id === campaignId; });
+  if (!campaign) return '';
+  return campaign.program ? programDisplayName(campaign.program) : (campaign.property && campaign.property.name) || '';
+}
+
+// Main page "Werbemittel": a format card opens all content of that format in view
+function galleryFormatSheet(level) {
+  const list = galleryCreatives(level.ids).filter(function(c) { return (c.creative_type || 'sonstige') === level.format; });
+  const kind = level.kind || 'objekt';
+  level.title = galleryFormatTitle(level.format);
+  const hero = document.getElementById('galleryHero');
+  hero.className = '';
+  hero.innerHTML = artHTML(kind, null, 'gallery' + level.format, '', galleryIcon(level.format));
+  decorateBanners(hero);
+  galleryPaint(hero.querySelector('.ph'), list, 'row');
+  const body = document.getElementById('galleryBody');
+  body.innerHTML = '<div class="sheet-title"><div><h2 id="galleryTitle">' + escHtml(level.title) + '</h2><p id="gallerySubtitle"></p></div></div>' +
+    '<section class="ad-group" id="galleryAds"><div class="ads wide"></div></section>';
+  const mine = {}, epoch = galleryEpoch;
+  body.$gallery = mine;
+  galleryLoad(list.map(function(c) { return c.id; })).then(function(found) {
+    const box = body.querySelector('#galleryAds');
+    if (body.$gallery !== mine || !body.isConnected || !box || epoch !== galleryEpoch) return;
+    const units = galleryUnits(list, found);
+    const top = units.length ? units[0].spend : 0;
+    const live = galleryLiveSet(list, galleryDays());
+    const leads = units.reduce(function(s, u) { return s + u.leads; }, 0);
+    setText('gallerySubtitle', plural(units.length, 'Werbemittel', 'Werbemittel') + ' · ' + formatNum(leads) + (leads === 1 ? ' Lead' : ' Leads') + ' · gesamte Laufzeit');
+    box.querySelector('.ads').innerHTML = galleryCardsHTML(units, GALLERY_FIRST_WIDE, function(u) {
+      return galleryCardHTML(u, top, campaignKinds[u.lead.campaign_id] || kind, galleryLiveUnit(u, live), galleryUnitPlace(u.ads));
+    });
+    box.insertAdjacentHTML('beforeend', galleryMoreHTML(units.length, GALLERY_FIRST_WIDE, level.title));
+    growBars(box);
+    galleryWire(box, units, level.ids);
+    galleryMoreWire(box);
+  });
+}
+
+// What a creative shows, as Oskar asked for it (27.10.2026): how it starts and how it is cut, not whether
+// a drone appears somewhere after 30 seconds
+const GALLERY_START = Object.freeze([['einstieg_hook', 'Einstieg'], ['erstes_motiv', 'Erstes Bild'], ['aufbau_erstes_bild', 'Aufbau'],
+  ['person_im_bild', 'Person im Bild'], ['marke_im_einstieg', 'Marke im ersten Bild']]);
+function galleryFact(label, value) {
+  return value ? '<span class="fact"><span>' + escHtml(label) + '</span><b>' + escHtml(value) + '</b></span>' : '';
+}
+function galleryTag(tags, key) {
+  const value = tags && typeof tags[key] === 'string' ? tags[key] : '';
+  return /^entfällt/i.test(value) ? '' : value;
+}
+function gallerySeconds(t, digits) {
+  return formatDecimal(t, digits || 0) + ' s';
+}
+function galleryCutHTML(tags, m) {
+  if (!m || !m.video) return '';
+  const facts = galleryFact('Tempo', galleryTag(tags, 'schnitt_tempo')) +
+    (m.cuts.perMin !== null ? galleryFact('Schnitte pro Minute', formatDecimal(m.cuts.perMin, 1)) : '') +
+    (m.cuts.shot !== null ? galleryFact('Ø Einstellung', gallerySeconds(m.cuts.shot, 1)) : '') +
+    (m.duration ? galleryFact('Länge', gallerySeconds(Math.round(m.duration))) : '') +
+    galleryFact('Gesprochen', galleryTag(tags, 'gesprochener_text_erkennbar'));
+  return facts ? '<div class="card pad"><h3>Schnitt</h3><div class="facts">' + facts + '</div></div>' : '';
+}
+
+// One creative: its video or every card of its carousel on a stage, its result with all its ads, how it
+// starts and how it is cut
+function galleryCreativeSheet(level) {
+  const c = allCreatives.find(function(x) { return x.id === level.id; });
+  const hero = document.getElementById('galleryHero');
+  const body = document.getElementById('galleryBody');
+  if (!c) { body.innerHTML = '<div class="sheet-title"><div><h2 id="galleryTitle">Werbemittel</h2></div></div>'; return; }
+  const ads = (level.ads && level.ads.length ? level.ads : [c.id]).map(function(id) { return allCreatives.find(function(x) { return x.id === id; }); }).filter(Boolean);
+  const sum = function(key) { return ads.reduce(function(s, x) { return s + (x.metrics[key] || 0); }, 0); };
+  const kind = campaignKinds[c.campaign_id] || 'objekt';
+  const phase = new Set(ads.map(function(x) { return x.campaign_id; }));
+  const where = phase.size > 1 ? 'dieser ' + formatNum(phase.size) + ' Kampagnen' : 'der Phase';
+  const siblings = galleryCreatives(Array.from(phase));
+  const total = siblings.reduce(function(s, x) { return s + x.metrics.spend; }, 0);
+  const totalLeads = siblings.reduce(function(s, x) { return s + x.metrics.leads; }, 0);
+  const days = galleryDays();
+  let first = '', last = '';
+  ads.forEach(function(x) { const d = days[x.id]; if (d) { if (!first || d.first < first) first = d.first; if (!last || d.last > last) last = d.last; } });
+  const live = ads.some(function(x) { return galleryLiveSet(siblings, days).has(x.id); });
+  const spend = sum('spend'), leads = sum('leads');
+  if (!level.title) level.title = galleryName(c, galleryCached(c.id));
+  hero.className = 'stage';
+  hero.innerHTML = '<div class="ph stage-bg" style="background:' + galleryGradient(kind, c.id) + '"><div class="ph-k"><span class="mi">' + I(galleryIcon(c.creative_type)) + '</span></div></div>' +
+    '<div class="stage-in" id="galleryStage"></div>';
+  decorateBanners(hero);
+  const kpi = function(label, value, sub) { return '<div class="card s-kpi"><span>' + label + '</span><b>' + value + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; };
+  const runDays = first ? Math.round((parseDay(last) - parseDay(first)) / 864e5) + 1 : 0;
+  const whole = siblings.length === ads.length;
+  body.innerHTML =
+    '<div class="sheet-title"><div><h2 id="galleryTitle">' + escHtml(level.title) + '</h2><p id="gallerySubtitle">' + escHtml(galleryUnitPlace(ads)) + '</p></div>' +
+      '<div class="chips"><span class="tag">' + escHtml(formatCreativeType(c.creative_type)) + '</span>' +
+        (ads.length > 1 ? '<span class="tag">' + formatNum(ads.length) + ' Anzeigen</span>' : '') + statusHTML(live ? 'active' : 'completed', '') + '</div></div>' +
+    '<div class="s-kpis ad-kpis">' +
+      kpi('Leads', formatNum(leads), !whole && totalLeads > 0 ? budgetShareText(leads / totalLeads) + ' der Leads ' + where : '') +
+      kpi('Mediabudget', formatEUR(spend), whole ? 'das ganze Budget ' + where : budgetShareText(total > 0 ? spend / total : 0) + ' des Budgets ' + where) +
+      kpi('Impressionen', formatNum(sum('impressions')), '') +
+      kpi('Laufzeit', first ? (live ? 'seit ' + formatDateShort(first) : formatDateShort(first) + ' – ' + formatDateShort(last)) : '—', runDays ? plural(runDays, 'Tag', 'Tage') : '') +
+    '</div>' +
+    '<div class="ad-about" id="galleryAbout"></div>' +
+    '<div id="galleryFrames" hidden></div><div id="galleryTranscript" hidden></div>';
+  const epoch = galleryEpoch;
+  galleryLoad([c.id]).then(function(found) {
+    const m = found[0];
+    if (epoch !== galleryEpoch || !document.getElementById('galleryStage')) return;
+    const name = galleryName(c, m);
+    setText('galleryTitle', name);
+    level.title = name;
+    const start = GALLERY_START.map(function(f) { return galleryFact(f[1], galleryTag(c.tags, f[0])); }).join('');
+    const opening = m && m.opening ? '<p class="ad-quote"></p>' : '';
+    document.getElementById('galleryAbout').innerHTML = (opening || start ? '<div class="card pad ad-open"><h3>So startet die Anzeige</h3>' + opening +
+      (start ? '<div class="facts">' + start + '</div>' : '') + '</div>' : '') + galleryCutHTML(c.tags, m);
+    if (opening) document.querySelector('#galleryAbout .ad-quote').textContent = '„' + m.opening.replace(/^[„"“]+|[“"”]+$/g, '') + '“';
+    // without media the stage folds back to a banner of the usual height
+    if (!m) { hero.className = ''; return; }
+    galleryStage(document.getElementById('galleryStage'), m, name);
+    hero.classList.add('has-media');
+    hero.querySelector('.stage-bg').style.setProperty('--poster', 'url("' + m.poster.replace(/["\\\n]/g, '') + '")');
+    if (m.frames.length > 1) {
+      const box = document.getElementById('galleryFrames');
+      box.hidden = false;
+      box.className = 'card pad ad-frames';
+      box.innerHTML = '<div class="card-h"><h3>Bild für Bild</h3><span class="sec-note">alle 2 Sekunden</span></div><div class="frames">' +
+        m.frames.map(function(f) { return '<figure><img alt="" decoding="async" loading="lazy" src="' + galleryAttr(f.url) + '"><figcaption>' + gallerySeconds(f.t) + '</figcaption></figure>'; }).join('') + '</div>';
+    }
+    if (m.transcript) {
+      const box = document.getElementById('galleryTranscript');
+      box.hidden = false;
+      box.className = 'card pad ad-text';
+      box.innerHTML = '<div class="card-h"><h3>Gesprochener Text</h3>' + (m.duration ? '<span class="sec-note">' + gallerySeconds(Math.round(m.duration)) + '</span>' : '') + '</div><p></p>';
+      box.querySelector('p').textContent = m.transcript;
+    }
+  });
+}
+
+// The stage: a video plays muted on its own, a carousel glides card by card with its edges fading out,
+// a picture stands alone
+function galleryStage(stage, m, name) {
+  if (m.video) {
+    const video = document.createElement('video');
+    video.src = m.video;
+    video.poster = m.poster;
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.controls = true;
+    video.preload = 'metadata';
+    video.setAttribute('aria-label', name);
+    if (m.width && m.height) video.style.aspectRatio = m.width + ' / ' + m.height;
+    stage.appendChild(video);
+    if (!REDUCED) video.play().catch(function() { /* the controls stay */ });
+    return;
+  }
+  const pictures = m.images.length ? m.images : [m.poster];
+  const track = document.createElement('div');
+  track.className = 'stage-track' + (pictures.length > 1 ? ' many' : '');
+  pictures.forEach(function(url, i) {
+    const img = document.createElement('img');
+    img.src = url;
+    img.decoding = 'async';
+    img.alt = pictures.length > 1 ? name + ', Karte ' + (i + 1) + ' von ' + pictures.length : name;
+    track.appendChild(img);
+  });
+  stage.appendChild(track);
+  if (pictures.length < 2) return;
+  stage.classList.add('wide');
+  // each card stands alone in the middle, whole: half the free width on either side, and the next card
+  // starts beyond the stage's edge (Oskar, 27.10.2026: nothing cut off)
+  const center = function() {
+    const card = track.firstChild;
+    if (!card || !card.clientWidth) return;
+    const pad = Math.max(16, (track.clientWidth - card.clientWidth) / 2);
+    track.style.setProperty('--pad', pad + 'px');
+    track.style.gap = (pad + 24) + 'px';
+  };
+  track.firstChild.addEventListener('load', center, { once: true });
+  if (typeof ResizeObserver === 'function') new ResizeObserver(center).observe(track);
+  center();
+  const count = document.createElement('span');
+  count.className = 'stage-count';
+  count.textContent = '1 / ' + pictures.length;
+  stage.appendChild(count);
+  const at = function() {
+    const mid = track.scrollLeft + track.clientWidth / 2, imgs = track.children;
+    let best = 0;
+    for (let i = 0; i < imgs.length; i++) {
+      if (Math.abs(imgs[i].offsetLeft + imgs[i].clientWidth / 2 - mid) < Math.abs(imgs[best].offsetLeft + imgs[best].clientWidth / 2 - mid)) best = i;
+    }
+    return best;
+  };
+  const go = function(i) {
+    const img = track.children[Math.max(0, Math.min(track.children.length - 1, i))];
+    track.scrollTo({ left: img.offsetLeft + img.clientWidth / 2 - track.clientWidth / 2, behavior: REDUCED ? 'auto' : 'smooth' });
+  };
+  ['prev', 'next'].forEach(function(which) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'stage-nav ' + which;
+    btn.setAttribute('aria-label', which === 'prev' ? 'Vorherige Karte' : 'Nächste Karte');
+    btn.innerHTML = I('chev');
+    btn.onclick = function(e) { e.stopPropagation(); go(at() + (which === 'prev' ? -1 : 1)); };
+    stage.appendChild(btn);
+  });
+  track.addEventListener('scroll', function() { count.textContent = (at() + 1) + ' / ' + track.children.length; }, { passive: true });
 }
 
 // ============================================
@@ -3279,6 +4046,7 @@ function renderLive() {
     }));
   });
   decorateBanners(box);
+  galleryLive(box, rows);
 }
 
 // ============================================
@@ -3874,6 +4642,7 @@ function renderCampaignTable(metrics) {
       '<div class="cpl r"><b>' + (cpl !== null ? formatEUR(cpl) : '—') + '</b>' + (cpl === null && row.leads > 0 ? '<span class="muted">unter ' + MIN_SUBSET_LEADS + ' Leads</span>' : compare) + '</div>' +
       '<span class="chev">' + I('chev') + '</span>';
     container.appendChild(div);
+    galleryThumb(div, row.flights.map(function(f) { return f.id; }));
   });
 }
 
@@ -4005,6 +4774,7 @@ function renderMainCreativePerformance(metrics) {
   container.innerHTML = creativeCardsHTML(list, group.kind || (currentKind === 'all' ? 'objekt' : currentKind), 'main');
   growBars(container);
   decorateBanners(container);
+  galleryFormats(container, group, group.kind || (currentKind === 'all' ? 'objekt' : currentKind));
 }
 
 // ============================================
@@ -4355,6 +5125,7 @@ function renderDetailBenchmark(campaignIds, totalSpend, totalLeads, totalImpress
 
 function closeDetail() {
   document.getElementById('detailModal').classList.remove('open');
+  galleryStop();
   document.body.style.overflow = '';
   sheetStack = [];
   document.getElementById('detailBack').hidden = true;
@@ -4368,8 +5139,13 @@ function closeDetail() {
 let sheetStack = [];
 
 function showSheetLevel(level) {
-  if (level.type === 'program') openProgramDetail(level.id); else openDetail(level.id);
-  level.title = document.getElementById('detailTitle').textContent;
+  if (level.type === 'creative' || level.type === 'gallery') galleryShowLevel(level);
+  else {
+    galleryReturnSheet();
+    if (level.type === 'program') openProgramDetail(level.id); else openDetail(level.id);
+    galleryCampaignHero();
+    level.title = document.getElementById('detailTitle').textContent;
+  }
   const parent = sheetStack.length > 1 ? sheetStack[sheetStack.length - 2] : null;
   const back = document.getElementById('detailBack');
   back.hidden = !parent;
@@ -4769,9 +5545,11 @@ function renderCreativePerformance(campaignIds, totalSpend, totalLeads) {
   section.hidden = false;
   setText('detailCreativeNote', lifetimeLabel());
   setTip('detailCreativeTip', 'Info zu Werbemittel', creativeTipHTML(group, true, creativeCompare(group)));
-  container.innerHTML = creativeCardsHTML(list, campaignKinds[currentDetailCampaignId] || 'objekt', currentDetailCampaignId || 'detail');
-  growBars(container);
-  decorateBanners(container);
+  galleryRenderSheet(container, Array.from(idSet).filter(function(id) { return group.filter(id); }), campaignKinds[currentDetailCampaignId] || 'objekt', function() {
+    container.innerHTML = creativeCardsHTML(list, campaignKinds[currentDetailCampaignId] || 'objekt', currentDetailCampaignId || 'detail');
+    growBars(container);
+    decorateBanners(container);
+  });
 }
 
 // ============================================
@@ -4932,8 +5710,8 @@ const CREATIVE_LABELS = Object.freeze(Object.assign(Object.create(null), {
   'th_reel': 'Talking-Head-Reel',
   'scn_reel': 'Szenisches Reel',
   'single_image': 'Einzelbild',
-  'carousel': 'Karussell',
-  'karussell': 'Karussell',
+  'carousel': 'Carousel',
+  'karussell': 'Carousel',
   'reel': 'Reel',
   'video': 'Video',
   'story': 'Story',
@@ -7388,7 +8166,8 @@ function agencyFxItems(cmp) {
       level: Math.max.apply(null, rows.map(function(r) { return r.level; })),
       line: w ? agencyCap(f.ads) + ' gegenüber den übrigen Anzeigen' : 'Kampagnen ' + f.label + ' gegenüber Kampagnen ohne' });
   });
-  cmp.tags.filter(function(t) { return t.level >= 1 && !t.sameAs; }).forEach(function(t) {
+  // Oskar, 27.10.2026: no drone comparison; what counts is how an ad starts and how it is cut
+  cmp.tags.filter(function(t) { return t.level >= 1 && !t.sameAs && t.key !== 'drone'; }).forEach(function(t) {
     items.push({ id: t.key, type: 'content', name: t.label, t: t, level: t.level, line: 'Kampagnen damit gegenüber Kampagnen ohne',
       rows: [{ effect: t.effect, level: t.level, same: t.same, pair: agencyPair(t), labelA: 'mit', labelB: 'ohne', ci80: t.ci80,
         facts: formatNum(t.nA) + ' gegen ' + plural(t.nB, 'Kampagne', 'Kampagnen'), how: 'Kampagnen bei gleichem Budget, im selben Werbekonto und Zeitraum',
