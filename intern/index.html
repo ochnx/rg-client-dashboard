@@ -3458,8 +3458,11 @@ function galleryFormatSheet(level) {
 }
 
 // What a creative shows, as Oskar asked for it (27.10.2026): how it starts and how it is cut, not whether
-// a drone appears somewhere after 30 seconds
-const GALLERY_START = Object.freeze([['einstieg_hook', 'Einstieg'], ['erstes_motiv', 'Erstes Bild'], ['aufbau_erstes_bild', 'Aufbau'],
+// a drone appears somewhere after 30 seconds. Taxonomy 1.2 rows carry the first five, older 1.1 rows the rest;
+// a field a row does not have stays out.
+const GALLERY_START = Object.freeze([['aufhaenger', 'Aufhänger'], ['satzform', 'Satzform'], ['erstes_bild', 'Erstes Bild'],
+  ['machart', 'Machart'], ['look', 'Look'],
+  ['einstieg_hook', 'Einstieg'], ['erstes_motiv', 'Erstes Bild'], ['aufbau_erstes_bild', 'Aufbau'],
   ['person_im_bild', 'Person im Bild'], ['marke_im_einstieg', 'Marke im ersten Bild']]);
 function galleryFact(label, value) {
   return value ? '<span class="fact"><span>' + escHtml(label) + '</span><b>' + escHtml(value) + '</b></span>' : '';
@@ -6696,15 +6699,20 @@ const INTEL_FORMAT_COMPARISONS = Object.freeze([
     title: 'Der Vergleich zum szenischen Video', titleBetween: 'Der Vergleich ganzer Kampagnen mit und ohne szenisches Video', types: INTEL_FORMATS.motion, seed: 32 }
 ]);
 
-// Contents from the creative classification (creatives[].tags, taxonomy 1.1, matched without case),
-// compared the same way: a campaign has a content when its classified ads with it had at least 30 €
-// budget. A campaign without 30 € of classified ads (of videos, for "Person im Video") stays out.
+// Contents from the creative classification (creatives[].tags, matched without case), compared the same way: a
+// campaign has a content when its classified ads with it had at least 30 € budget. A campaign without 30 € of classified
+// ads (of videos, for the video-only contents) stays out. On /intern/ taxonomy 1.2 with the 1.1 fields where they mean the
+// same: how an ad starts and how it is made (Oskar, 27.10.2026), no drone and no "Lage" (1.2 folds it into Objekt-Steckbrief).
+// Left out: "Person im Video" (the same campaigns as "Makler spricht im ersten Bild"), and Verkaufsbeweis and Handy-Selfie,
+// which occur only in owner and recruiting campaigns while these units are property campaigns. "Außen" reads 1.2 only:
+// 1.1 counted drone and view shots, 1.2 calls them Stadt/Umgebung, so mixed rows would land on both sides.
 const INTEL_TAG_COMPARISONS = Object.freeze([
-  { key: 'drone', field: 'drohne_enthalten', seed: 41, label: 'Drohnenaufnahme', a: ['ja'] },
+  { key: 'question', fields: ['satzform'], seed: 46, label: 'Einstieg als Frage', a: ['Frage'] },
+  { key: 'speaker', fields: ['erstes_bild'], videoOnly: true, seed: 47, label: 'Makler spricht im ersten Bild', a: ['Makler spricht drinnen', 'Makler spricht draußen', 'Makler am Objekt'] },
+  { key: 'highlight', fields: ['aufhaenger'], seed: 48, label: 'Einstieg mit Besonderheit', a: ['Objekt mit Besonderheit'] },
+  { key: 'highbudget', fields: ['look'], seed: 51, label: 'High-Budget-Look', a: ['High Budget'] },
   { key: 'price', field: 'preis_sichtbar', seed: 42, label: 'Preis sichtbar', a: ['ja'] },
-  { key: 'location', field: 'einstieg_hook', seed: 43, label: 'Einstieg mit Lage', a: ['Lage'] },
-  { key: 'person', field: 'person_im_bild', videoOnly: true, seed: 44, label: 'Person im Video', a: ['Makler', 'andere Person'] },
-  { key: 'outside', field: 'erstes_motiv', seed: 45, label: 'Außen im ersten Bild', a: ['Außenansicht', 'Garten/Terrasse', 'Ausblick', 'Drohne/Luftbild'] }
+  { key: 'outside', fields: ['erstes_bild'], seed: 45, label: 'Außen im ersten Bild', a: ['Objekt außen', 'Stadt/Umgebung'] }
 ]);
 
 // Spend and leads of a delivery series up to the day on which the spend reached `budget` (that day
@@ -7084,10 +7092,12 @@ function campaignComparisons(objects, creativeRows) {
     return campaignContrast(base.units, function(u) {
       let known = 0;
       const hits = [];
+      const fields = cmp.fields || [cmp.field];
+      const has = function(c, f) { return c.tags && typeof c.tags[f] === 'string' && norm(c.tags[f]) !== 'unklar'; };
       u.creatives.forEach(function(c) {
-        if (!c.tags || (cmp.videoOnly && INTEL_FORMATS.video.indexOf(c.type) < 0)) return;
+        if (!fields.some(function(f) { return has(c, f); }) || (cmp.videoOnly && INTEL_FORMATS.video.indexOf(c.type) < 0)) return;
         known += c.spend;
-        if (a.indexOf(norm(c.tags[cmp.field])) >= 0) hits.push(c);
+        if (fields.some(function(f) { return has(c, f) && a.indexOf(norm(c.tags[f])) >= 0; })) hits.push(c);
       });
       return known >= INTEL.minSideSpend ? booked(u, hits) : null;
     }, cmp);
@@ -8146,7 +8156,8 @@ function agencyHowMuch(effect) {
   return !Number.isFinite(effect) || !pct ? 'etwa gleich viel' : pctText(pct, 0) + (effect > 0 ? ' mehr' : ' weniger');
 }
 
-const AGENCY_FX_ICONS = Object.freeze({ th: 'th', scene: 'scene', drone: 'drone', price: 'euro', location: 'pin', person: 'person', outside: 'outside', account: 'wallet' });
+const AGENCY_FX_ICONS = Object.freeze({ th: 'th', scene: 'scene', drone: 'drone', price: 'euro', location: 'pin', person: 'person', outside: 'outside', account: 'wallet',
+  question: 'spark', speaker: 'th', highlight: 'pin', highbudget: 'eye' });
 const AGENCY_FX_KIND = Object.freeze({ format: 'Format', content: 'Inhalt', account: 'Werbekonto' });
 
 // Every comparison of the section as one item for its card, the clearest result and its sheet. A format's main result
@@ -9943,7 +9954,8 @@ const AGENCY_ICONS = Object.freeze(Object.assign(Object.create(null), {
   outside: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yNTQuODgsMTk1LjkybC01NC41Ni05Mi4wOEExNS44NywxNS44NywwLDAsMCwxODYuNTUsOTZoMGExNS44NSwxNS44NSwwLDAsMC0xMy43Niw3Ljg0bC0xNS42NCwyNi4zOWE0LDQsMCwwLDAsMCw0LjA3bDI2LjgsNDUuNDdhOC4xMyw4LjEzLDAsMCwxLTEuODksMTAuNTUsOCw4LDAsMCwxLTExLjgtMi4yNkwxMDEuNzksNzEuODhhMTYsMTYsMCwwLDAtMjcuNTgsMEwxLjExLDE5NS45NGE4LDgsMCwwLDAsMSw5LjUyQTguMjMsOC4yMywwLDAsMCw4LjIzLDIwOEgyNDcuNzdhOC4yOSw4LjI5LDAsMCwwLDYuMDktMi41NUE4LDgsMCwwLDAsMjU0Ljg4LDE5NS45MlpNNjQuNDMsMTIwLDg4LDgwbDIzLjU3LDQwWk0xNDAsNTJhMjQsMjQsMCwxLDEsMjQsMjRBMjQsMjQsMCwwLDEsMTQwLDUyWiIvPjwvc3ZnPg==',
   pin: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0xMjgsMTZhODguMSw4OC4xLDAsMCwwLTg4LDg4YzAsNzUuMyw4MCwxMzIuMTcsODMuNDEsMTM0LjU1YTgsOCwwLDAsMCw5LjE4LDBDMTM2LDIzNi4xNywyMTYsMTc5LjMsMjE2LDEwNEE4OC4xLDg4LjEsMCwwLDAsMTI4LDE2Wm0wLDU2YTMyLDMyLDAsMSwxLTMyLDMyQTMyLDMyLDAsMCwxLDEyOCw3MloiLz48L3N2Zz4=',
   wallet: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yMTYsNjRINTZhOCw4LDAsMCwxLDAtMTZIMTkyYTgsOCwwLDAsMCwwLTE2SDU2QTI0LDI0LDAsMCwwLDMyLDU2VjE4NGEyNCwyNCwwLDAsMCwyNCwyNEgyMTZhMTYsMTYsMCwwLDAsMTYtMTZWODBBMTYsMTYsMCwwLDAsMjE2LDY0Wm0tMzYsODBhMTIsMTIsMCwxLDEsMTItMTJBMTIsMTIsMCwwLDEsMTgwLDE0NFoiLz48L3N2Zz4=',
-  spark: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yMDgsMTQ0YTE1Ljc4LDE1Ljc4LDAsMCwxLTEwLjQyLDE0Ljk0TDE0NiwxNzhsLTE5LDUxLjYyYTE1LjkyLDE1LjkyLDAsMCwxLTI5Ljg4LDBMNzgsMTc4bC01MS42Mi0xOWExNS45MiwxNS45MiwwLDAsMSwwLTI5Ljg4TDc4LDExMGwxOS01MS42MmExNS45MiwxNS45MiwwLDAsMSwyOS44OCwwTDE0NiwxMTBsNTEuNjIsMTlBMTUuNzgsMTUuNzgsMCwwLDEsMjA4LDE0NFpNMTUyLDQ4aDE2VjY0YTgsOCwwLDAsMCwxNiwwVjQ4aDE2YTgsOCwwLDAsMCwwLTE2SDE4NFYxNmE4LDgsMCwwLDAtMTYsMFYzMkgxNTJhOCw4LDAsMCwwLDAsMTZabTg4LDMyaC04VjcyYTgsOCwwLDAsMC0xNiwwdjhoLThhOCw4LDAsMCwwLDAsMTZoOHY4YTgsOCwwLDAsMCwxNiwwVjk2aDhhOCw4LDAsMCwwLDAtMTZaIi8+PC9zdmc+'
+  spark: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yMDgsMTQ0YTE1Ljc4LDE1Ljc4LDAsMCwxLTEwLjQyLDE0Ljk0TDE0NiwxNzhsLTE5LDUxLjYyYTE1LjkyLDE1LjkyLDAsMCwxLTI5Ljg4LDBMNzgsMTc4bC01MS42Mi0xOWExNS45MiwxNS45MiwwLDAsMSwwLTI5Ljg4TDc4LDExMGwxOS01MS42MmExNS45MiwxNS45MiwwLDAsMSwyOS44OCwwTDE0NiwxMTBsNTEuNjIsMTlBMTUuNzgsMTUuNzgsMCwwLDEsMjA4LDE0NFpNMTUyLDQ4aDE2VjY0YTgsOCwwLDAsMCwxNiwwVjQ4aDE2YTgsOCwwLDAsMCwwLTE2SDE4NFYxNmE4LDgsMCwwLDAtMTYsMFYzMkgxNTJhOCw4LDAsMCwwLDAsMTZabTg4LDMyaC04VjcyYTgsOCwwLDAsMC0xNiwwdjhoLThhOCw4LDAsMCwwLDAsMTZoOHY4YTgsOCwwLDAsMCwxNiwwVjk2aDhhOCw4LDAsMCwwLDAtMTZaIi8+PC9zdmc+',
+  eye: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxwYXRoIGQ9Ik0yNDcuMzEsMTI0Ljc2Yy0uMzUtLjc5LTguODItMTkuNTgtMjcuNjUtMzguNDFDMTk0LjU3LDYxLjI2LDE2Mi44OCw0OCwxMjgsNDhTNjEuNDMsNjEuMjYsMzYuMzQsODYuMzVDMTcuNTEsMTA1LjE4LDksMTI0LDguNjksMTI0Ljc2YTgsOCwwLDAsMCwwLDYuNWMuMzUuNzksOC44MiwxOS41NywyNy42NSwzOC40QzYxLjQzLDE5NC43NCw5My4xMiwyMDgsMTI4LDIwOHM2Ni41Ny0xMy4yNiw5MS42Ni0zOC4zNGMxOC44My0xOC44MywyNy4zLTM3LjYxLDI3LjY1LTM4LjRBOCw4LDAsMCwwLDI0Ny4zMSwxMjQuNzZaTTEyOCwxNjhhNDAsNDAsMCwxLDEsNDAtNDBBNDAsNDAsMCwwLDEsMTI4LDE2OFoiLz48L3N2Zz4='
 }));
 
 // ---------- Top bar: the logo leads home, menus for the client and the period ----------
