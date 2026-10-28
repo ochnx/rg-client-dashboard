@@ -3194,6 +3194,56 @@ function galleryGradient(kind, seed) {
   return 'radial-gradient(140% 110% at 12% 0%,' + g[0] + ' 0%,' + g[1] + ' 50%,' + g[2] + ' 100%)';
 }
 
+// ---------- loading pictures ----------
+// Supabase renders a picture the first time it is asked for and turns requests away (429) while its database is
+// busy; on 28.10.2026 that was about a fifth of first requests, and those creatives vanished from their banners.
+// So pictures load a few at a time, and one that fails is asked for again after a growing pause, a little scattered
+// so refused pictures do not return all at once (with a try number, so the browser cannot answer from the failure);
+// only after the last try, about 45 seconds later, does it count as missing.
+const GALLERY_PARALLEL = 4;
+const GALLERY_PAUSES = Object.freeze([1500, 3000, 6000, 12000, 24000]);
+const GALLERY_STUCK = 20e3; // a picture that neither arrives nor fails gives its place free after 20 seconds
+const galleryQueue = [];
+let galleryLoading = 0;
+
+function galleryPicture(img, url, arrived, missing) {
+  let tries = 0;
+  const run = function(release) {
+    // a picture whose place has left the page is not fetched any more
+    if (!img.isConnected) return release();
+    const timer = setTimeout(release, GALLERY_STUCK);
+    const settle = function(ok) {
+      clearTimeout(timer);
+      img.removeEventListener('load', onLoad);
+      img.removeEventListener('error', onError);
+      release();
+      if (ok) { if (arrived) arrived(); }
+      else if (tries < GALLERY_PAUSES.length) setTimeout(function() { galleryQueue.push(run); galleryPump(); }, GALLERY_PAUSES[tries++] * (0.75 + Math.random() / 2));
+      else if (missing && img.isConnected) missing();
+    };
+    const onLoad = function() { settle(true); };
+    const onError = function() { settle(false); };
+    img.addEventListener('load', onLoad);
+    img.addEventListener('error', onError);
+    img.src = tries ? url + (url.indexOf('?') >= 0 ? '&' : '?') + 'try=' + tries : url;
+  };
+  galleryQueue.push(run);
+  // once the current task has put the picture in its place
+  Promise.resolve().then(galleryPump);
+}
+function galleryPump() {
+  while (galleryLoading < GALLERY_PARALLEL && galleryQueue.length) {
+    let freed = false;
+    galleryLoading++;
+    galleryQueue.shift()(function() {
+      if (freed) return;
+      freed = true;
+      galleryLoading--;
+      galleryPump();
+    });
+  }
+}
+
 // ---------- pictures in banners ----------
 // Oskar, 27.10.2026: "Es sieht immer komisch aus, wenn so Creatives abgeschnitten sind." Every creative shows
 // whole, framed on the banner's gradient under its dither: one in the middle (single), a carousel with its
@@ -3209,14 +3259,12 @@ function galleryLayer(ph, media, mode) {
     const img = document.createElement('img');
     img.alt = '';
     img.decoding = 'async';
-    img.src = mode === 'thumb' ? m.thumb : m.poster;
     // a carousel shows that there is more: its further cards stand behind it
     if (!row && mode !== 'thumb' && m.images.length > 1) img.className = 'stack';
-    // every picture fades in as it arrives; one that fails leaves alone, the layer only with the last one
-    const arrived = function() { img.classList.add('in'); ph.classList.add('has-media'); };
-    if (img.complete && img.naturalWidth) arrived();
-    else img.addEventListener('load', arrived, { once: true });
-    img.addEventListener('error', function() { img.remove(); if (!layer.firstChild) layer.remove(); }, { once: true });
+    // every picture fades in as it arrives; one that stays missing leaves alone, the layer only with the last one
+    galleryPicture(img, mode === 'thumb' ? m.thumb : m.poster,
+      function() { img.classList.add('in'); ph.classList.add('has-media'); },
+      function() { img.remove(); if (!layer.firstChild) layer.remove(); });
     layer.appendChild(img);
   });
   ph.insertBefore(layer, ph.firstChild);
@@ -3546,7 +3594,8 @@ function galleryCreativeSheet(level) {
       box.hidden = false;
       box.className = 'card pad ad-frames';
       box.innerHTML = '<div class="card-h"><h3>Bild für Bild</h3><span class="sec-note">alle 2 Sekunden</span></div><div class="frames">' +
-        m.frames.map(function(f) { return '<figure><img alt="" decoding="async" loading="lazy" src="' + galleryAttr(f.url) + '"><figcaption>' + gallerySeconds(f.t) + '</figcaption></figure>'; }).join('') + '</div>';
+        m.frames.map(function(f) { return '<figure><img alt="" decoding="async"><figcaption>' + gallerySeconds(f.t) + '</figcaption></figure>'; }).join('') + '</div>';
+      box.querySelectorAll('.frames img').forEach(function(img, i) { galleryPicture(img, m.frames[i].url); });
     }
     if (m.transcript) {
       const box = document.getElementById('galleryTranscript');
@@ -3581,9 +3630,9 @@ function galleryStage(stage, m, name) {
   track.className = 'stage-track' + (pictures.length > 1 ? ' many' : '');
   pictures.forEach(function(url, i) {
     const img = document.createElement('img');
-    img.src = url;
     img.decoding = 'async';
     img.alt = pictures.length > 1 ? name + ', Karte ' + (i + 1) + ' von ' + pictures.length : name;
+    galleryPicture(img, url);
     track.appendChild(img);
   });
   stage.appendChild(track);
