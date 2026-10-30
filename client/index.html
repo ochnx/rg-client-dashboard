@@ -413,7 +413,7 @@
     .xrow.reg { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 118px; }
     .xcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 36px; }
     .xcols .xrow:nth-child(-n+2) { border-top: 0; }
-    .card-h + .xrow, .card-h + .ms, .card-h + .sim, .cx-text + .xrow { border-top: 0; }
+    .card-h + .xrow, .card-h + .sim, .cx-text + .xrow { border-top: 0; }
     .xrow .lb { font-weight: 600; font-size: 14px; }
     .xrow .nm1 { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .xplot { position: relative; height: 18px; }
@@ -424,10 +424,6 @@
     .xrow:hover .xplot .dot, .ov-row:hover .ov-plot .dot { transform: scale(1.18); }
     .xv b { display: block; font-weight: 650; font-size: 14.5px; white-space: nowrap; }
     .xv small { display: block; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .ms { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--hair); }
-    .ms-n { width: 36px; height: 36px; border-radius: 10px; background: var(--fill); display: grid; place-items: center; font: 700 14px/1 var(--display); color: var(--ink-2); }
-    .ms b { display: block; font-weight: 600; font-size: 14.5px; }
-    .ms small { display: block; color: var(--muted); font-size: 12.5px; }
     .ov-h, .ov-row { display: grid; grid-template-columns: 44px minmax(0, 1.2fr) minmax(0, 1.7fr) 92px; gap: 16px; align-items: center; padding: 10px 20px; }
     .ov-h { padding: 12px 20px 8px; color: var(--muted); font-size: 12.5px; border-bottom: 1px solid var(--hair); }
     .ov-h .sc { grid-column: 3; display: grid; grid-template-columns: 1fr auto 1fr; }
@@ -981,8 +977,8 @@ let _globalAudienceBasis = null;
 let _detailAudienceCache = Object.create(null);
 let _globalAudienceLoaded = false; // kind the global audience was built for, false before the first build
 
-// A cost per lead from fewer leads says too little: months, weeks, flights and other
-// subsets show it only from this many leads on.
+// Audience shares, and the average a campaign is compared with, need this many leads. A cost per lead
+// itself shows from the first lead on (Oskar, 30.10.2026).
 const MIN_SUBSET_LEADS = 20;
 
 // Markup of every region a session renders into, captured before the first login.
@@ -2404,11 +2400,9 @@ function renderKindFilter() {
   syncPill(box);
 }
 
-// Cost per lead or null. Subsets (a month, a week, a flight) need MIN_SUBSET_LEADS leads.
-function costPerLead(spend, leads, subset) {
-  if (!(leads > 0)) return null;
-  if (subset && leads < MIN_SUBSET_LEADS) return null;
-  return spend / leads;
+// Cost per lead, null without a lead. Every view shows it from the first lead on (Oskar, 30.10.2026).
+function costPerLead(spend, leads) {
+  return leads > 0 ? spend / leads : null;
 }
 
 // ============================================
@@ -2554,8 +2548,8 @@ function mixHTML(parts) {
   }).join('') + '</small>' : '';
 }
 
-// Cost per lead of each way inside one campaign (R3): only from pure phases of that way, only
-// from MIN_SUBSET_LEADS leads; form+web phases get none. Only when pure phases of both ways have leads.
+// Cost per lead of each way inside one campaign (R3): only from pure phases of that way; form+web phases
+// get none. Only when pure phases of both ways have leads.
 function typeCosts(flights) {
   const sums = { form: { spend: 0, leads: 0 }, web: { spend: 0, leads: 0 } };
   flights.forEach(function(f) {
@@ -2565,7 +2559,7 @@ function typeCosts(flights) {
   });
   if (!leadRule || !(sums.form.leads > 0 && sums.web.leads > 0)) return null;
   return ['web', 'form'].map(function(type) {
-    return { type: type, leads: sums[type].leads, cpl: costPerLead(sums[type].spend, sums[type].leads, true) };
+    return { type: type, leads: sums[type].leads, cpl: costPerLead(sums[type].spend, sums[type].leads) };
   }).sort(function(a, b) { return b.leads - a.leads; });
 }
 
@@ -2743,16 +2737,13 @@ function renderKPIs(metrics) {
   const leadDays = Math.max(1, dayCount - pendingDates.size);
   const avgCPL = totalLeads > 0 ? cplSpend / totalLeads : null;
   const clicks = clickStats(metrics);
-  // a month is a subset: below MIN_SUBSET_LEADS its cost per lead says too little
-  const shownCPL = currentFilter !== 'all' && totalLeads < MIN_SUBSET_LEADS ? null : avgCPL;
 
   const viewPrograms = new Set(campaigns.filter(c => inView(c.id)).map(c => c.program_id || 'legacy:' + c.id)).size;
   swapText('reportSub', periodLabel() + ' · ' + plural(viewPrograms, 'Kampagne', 'Kampagnen') +
     (currentKind === 'all' ? '' : ' · ' + kindStyle(currentKind).plural));
-  swapText('kpiCPL', shownCPL !== null ? formatEUR(shownCPL) : '—');
+  swapText('kpiCPL', avgCPL !== null ? formatEUR(avgCPL) : '—');
   // lead rule: days whose leads are pending replace the explanation, so the line stays short
-  swapText('kpiCPLSub', shownCPL !== null ? (totals.pending ? pendingText(totals.pending) : 'Mediabudget geteilt durch Leads')
-    : totalLeads > 0 ? 'erst ab ' + MIN_SUBSET_LEADS + ' Leads im Zeitraum' : 'keine Leads im Zeitraum');
+  swapText('kpiCPLSub', avgCPL !== null ? (totals.pending ? pendingText(totals.pending) : 'Mediabudget geteilt durch Leads') : 'keine Leads im Zeitraum');
   swapText('kpiLeads', formatNum(totalLeads));
   // lead rule: the split instead of the daily average; never a cost per way in the head
   swapText('kpiLeadsSub', splitText(totals) || (dayCount ? 'Ø\u00a0' + formatDecimal(totalLeads / leadDays, 1) + ' pro Tag' : 'keine Daten im Zeitraum'));
@@ -2918,11 +2909,11 @@ function renderKindSplit() {
     // lead rule: "1.390 Leads, davon 4 über die Website" under kinds with website leads
     const via = total.split && total.website > 0
       ? plural(total.leads, 'Lead', 'Leads') + (total.form > 0 ? ', davon ' + formatNum(total.website) + ' über die Website' : ', alle über die Website') : '';
-    return { kind: kind, leads: total.leads, cpl: costPerLead(total.cplSpend, total.leads, currentFilter !== 'all'), via: via };
+    return { kind: kind, leads: total.leads, cpl: costPerLead(total.cplSpend, total.leads), via: via };
   });
   const max = Math.max.apply(null, rows.map(function(row) { return row.cpl || 0; }).concat([1]));
   const valueHTML = function(row) {
-    return row.cpl !== null ? formatEUR(row.cpl) : '<span class="muted" style="font-weight:400;font-size:13px">' + (row.leads > 0 ? 'unter ' + MIN_SUBSET_LEADS + ' Leads' : 'keine Leads') + '</span>';
+    return row.cpl !== null ? formatEUR(row.cpl) : '<span class="muted" style="font-weight:400;font-size:13px">keine Leads</span>';
   };
   box.classList.toggle('dim', currentKind !== 'all');
   if (box.dataset.kinds !== presentKinds.join()) {
@@ -2986,7 +2977,7 @@ function renderLive() {
     const delivered = own.filter(function(m) { return (parseFloat(m.spend) || 0) > 0 && m.date; }).map(function(m) { return m.date; }).sort();
     const first = delivered[0] || null, last = delivered[delivered.length - 1] || null;
     const windowed = active.some(function(flight) { return flight.fWindow && flight.fWindow.rolling; });
-    const cpl = costPerLead(total.cplSpend, total.leads, true);
+    const cpl = costPerLead(total.cplSpend, total.leads);
     // lead rule: a "Website" chip when the running campaign has leads over the website
     const webChip = total.split && total.website > 0 ? '<span class="badge-live badge-way">Website</span>' : '';
     const lastRows = own.filter(function(m) { return m.date === lastDay; });
@@ -3017,8 +3008,7 @@ function renderLive() {
       '<div class="live-b"><div class="live-name"><div><b>' + escHtml(programDisplayName(program)) + '</b><span class="pl">' + escHtml(place) +
         (active.length < row.flights.length ? ' · aktuelle Phase' : '') + '</span></div>' +
         '<span class="kchip ' + kind + '">' + kindStyle(kind).label + '</span></div>' +
-      '<div class="live-stats"><div><span>Leads</span><b>' + formatNum(total.leads) + '</b></div><div><span>Kosten pro Lead</span><b>' + (cpl !== null ? formatEUR(cpl) : '—') + '</b>' +
-        (cpl === null && total.leads > 0 ? '<small>unter ' + MIN_SUBSET_LEADS + ' Leads</small>' : '') + '</div><div><span>Ausgegeben</span><b>' + formatEUR(total.spend) + '</b></div></div>' +
+      '<div class="live-stats"><div><span>Leads</span><b>' + formatNum(total.leads) + '</b></div><div><span>Kosten pro Lead</span><b>' + (cpl !== null ? formatEUR(cpl) : '—') + '</b></div><div><span>Ausgegeben</span><b>' + formatEUR(total.spend) + '</b></div></div>' +
       '<div class="chart h64"><canvas></canvas></div>' +
       '<div class="live-f">' + footer + '<span class="link">Details' + I('chev') + '</span></div></div></article>';
   }).join('');
@@ -3089,7 +3079,7 @@ function renderTrendChart(metrics) {
   const kinds = currentKind === 'all' ? presentKinds : [currentKind];
   const isCpl = trendMetric === 'cpl';
   // stacked areas for leads and budget (a week without delivery is a real 0); cost per lead as
-  // plain lines, only in weeks with enough leads
+  // plain lines, in every week with leads
   const datasets = kinds.map(function(kind, i) {
     const style = kindStyle(kind);
     return {
@@ -3100,7 +3090,7 @@ function renderTrendChart(metrics) {
         if (trendMetric === 'leads') return v ? v.leads : 0;
         if (trendMetric === 'spend') return v ? Math.round(v.spend * 100) / 100 : 0;
         if (!v) return null;
-        const cpl = costPerLead(v.cplSpend, v.leads, true);
+        const cpl = costPerLead(v.cplSpend, v.leads);
         return cpl !== null ? Math.round(cpl * 100) / 100 : null;
       }),
       borderColor: style.color, backgroundColor: isCpl ? 'transparent' : vGrad(style.color, .5),
@@ -3114,13 +3104,15 @@ function renderTrendChart(metrics) {
   });
 
   setText('trendTitle', { leads: 'Leads pro Woche', spend: 'Mediabudget pro Woche', cpl: 'Kosten pro Lead pro Woche' }[trendMetric]);
-  setText('trendSub', isCpl ? 'nur Wochen ab ' + MIN_SUBSET_LEADS + ' Leads' : (kinds.length > 1 ? 'nach Kampagnenart' : kindStyle(kinds[0] || 'objekt').plural));
+  setText('trendSub', kinds.length > 1 ? 'nach Kampagnenart' : kindStyle(kinds[0] || 'objekt').plural);
   document.getElementById('trendLegend').innerHTML = kinds.length > 1 ? kinds.map(function(kind) {
     return '<span><i style="background:' + kindStyle(kind).color + '"></i>' + kindStyle(kind).plural + '</span>';
   }).join('') : '';
-  // lead rule: Formular and Website of each week in view, for the tooltip and the key figure
+  // lead rule: Formular and Website of each week in view, for the tooltip and the key figure; the sums per
+  // kind for the key figure of the cost per lead
   weeks.forEach(function(w) {
     w.totals = leadRule ? sumRows((weekRows[w.key] || []).filter(function(m) { return kinds.indexOf(campaignKinds[m.campaign_id] || 'objekt') >= 0; })) : null;
+    w.byKind = weekMap[w.key] || Object.create(null);
   });
   trendFoot(weeks, datasets);
 
@@ -3157,7 +3149,26 @@ function trendFoot(weeks, datasets) {
   const years = [weeks[0].key.slice(0, 4), weeks[n - 1].key.slice(0, 4)];
   const span = weeks[0].label + ' bis ' + weeks[n - 1].label + ' · ' + (years[0] === years[1] ? years[0] : years[0] + '/' + years[1]);
   if (trendMetric === 'cpl') {
-    foot.innerHTML = '<b>Nur Wochen mit mindestens ' + MIN_SUBSET_LEADS + ' Leads je Art</b><span>' + escHtml(span) + '</span>';
+    // one kind, as its line shows it (pooled kinds would turn a change in the mix into a price): the one with the
+    // most leads in the last 8 weeks, named when several are in view. The last 4 weeks against the 4 before, each
+    // from its budget and leads; dearer is the worse direction.
+    const recent = weeks.slice(Math.max(0, n - 8));
+    const leadsOf = function(kind) { return recent.reduce(function(t, w) { return t + (w.byKind[kind] ? w.byKind[kind].leads : 0); }, 0); };
+    const kind = datasets.map(function(d) { return d.key; }).sort(function(a, b) { return leadsOf(b) - leadsOf(a); })[0];
+    const cost = function(a, b) {
+      const t = weeks.slice(Math.max(0, a), b).reduce(function(x, w) {
+        const c = w.byKind[kind];
+        return c ? { spend: x.spend + c.cplSpend, leads: x.leads + c.leads } : x;
+      }, { spend: 0, leads: 0 });
+      return costPerLead(t.spend, t.leads);
+    };
+    const now = cost(n - 4, n), before = n >= 8 ? cost(n - 8, n - 4) : null;
+    const dc = now !== null && before !== null ? Math.round((now / before - 1) * 100) : null;
+    const head = datasets.length > 1 ? kindStyle(kind).plural + ', letzte 4 Wochen' : 'Letzte 4 Wochen';
+    const note = dc !== null ? 'gegenüber den 4 Wochen davor' : n < 8 ? 'Für einen Vergleich fehlen noch 8 Wochen' : 'in den 4 Wochen davor keine Leads';
+    foot.innerHTML = now === null ? '<b>' + escHtml(head) + ' keine Leads</b><span>' + escHtml(span) + '</span>'
+      : '<b>' + escHtml(head + ' ' + formatEUR(now)) + ' pro Lead' + (dc === null ? '' : ' <span class="dl ' + (dc > 0 ? 'dn' : 'up') + '">' + signedPct(dc) + '</span>') + '</b>' +
+        '<span>' + escHtml(note) + ' · ' + escHtml(span) + '</span>';
     return;
   }
   const sum = function(a, b) {
@@ -3179,7 +3190,7 @@ function trendTip(i, chart) {
   const value = function(v) { return trendMetric === 'leads' ? plural(v, 'Lead', 'Leads') : formatEUR(v); };
   const rows = chart.data.datasets.filter(function(d) { return d.data[i]; }).map(function(d) { return [d.borderColor, d.label, value(d.data[i])]; });
   const title = w.label + ' · ab ' + w.from;
-  if (!rows.length) return tipHTML(title, [[null, trendMetric === 'cpl' ? 'unter ' + MIN_SUBSET_LEADS + ' Leads' : 'keine Auslieferung', '']]);
+  if (!rows.length) return tipHTML(title, [[null, trendMetric === 'cpl' ? 'keine Leads' : 'keine Auslieferung', '']]);
   const sum = trendMetric !== 'cpl' && rows.length > 1
     ? ['Gesamt', value(chart.data.datasets.reduce(function(a, d) { return a + (d.data[i] || 0); }, 0))] : null;
   // lead rule, leads: the split of the week and further website requests as quiet lines
@@ -3204,13 +3215,17 @@ function renderWeekdayPerformance(metrics) {
   var shortNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
   var dayData = Object.create(null);
   for (var i = 0; i < 7; i++) dayData[i] = { leads: 0, spend: 0, days: 0, cplSpend: 0 };
+  // lead rule: bars and the weekend figure both from the comparison group with the most leads (kind × way ×
+  // time zone), so the figure is what the bars show; all rows while no group has a known goal
+  var cmp = leadRule ? weekdayGroup(metrics) : { rows: metrics, text: '' };
+  var source = cmp.key || !leadRule ? cmp.rows : metrics;
 
   // Group by weekday; count each calendar date once. Lead rule: a date with pending leads counts
   // in the budget, but neither in the leads per day nor in the cost per lead.
   var pendingDates = Object.create(null);
-  if (leadRule) metrics.forEach(function(m) { if (m.date && (m.leads === null || m.leads === undefined)) pendingDates[m.date] = true; });
+  if (leadRule) source.forEach(function(m) { if (m.date && (m.leads === null || m.leads === undefined)) pendingDates[m.date] = true; });
   var seenDates = Object.create(null);
-  metrics.forEach(function(m) {
+  source.forEach(function(m) {
     if (!m.date) return;
     var d = parseDay(m.date);
     if (!d) return;
@@ -3233,7 +3248,7 @@ function renderWeekdayPerformance(metrics) {
     var leadDays = d.days - (d.pendingDays || 0);
     return { dow: dow, name: dayNames[dow], short: shortNames[dow], days: d.days,
       avgLeads: leadDays > 0 ? d.leads / leadDays : null, avgSpend: d.days > 0 ? d.spend / d.days : null,
-      cpl: costPerLead(d.cplSpend, d.leads, true) };
+      cpl: costPerLead(d.cplSpend, d.leads) };
   });
   if (rows.every(function(r) { return r.days === 0; })) {
     if (weekdayChart) { weekdayChart.destroy(); weekdayChart = null; }
@@ -3257,20 +3272,18 @@ function renderWeekdayPerformance(metrics) {
         if (!r || r.days === 0) return '';
         return tipHTML(r.name, [
           [chart.data.datasets[0].backgroundColor[i], 'Ø Leads pro Tag', r.avgLeads !== null ? formatDecimal(r.avgLeads, 1) : 'folgen noch'],
-          [null, 'Kosten pro Lead', r.cpl !== null ? formatEUR(r.cpl) : 'unter ' + MIN_SUBSET_LEADS + ' Leads'],
+          [null, 'Kosten pro Lead', r.cpl !== null ? formatEUR(r.cpl) : 'keine Leads'],
           [null, 'Ø Budget pro Tag', formatEUR(r.avgSpend)]
         ], ['ausgewertet', plural(r.days, 'Tag', 'Tage')]);
       } } } }
     });
     weekdayChart.$rows = rows;
   }
-  // weekend against weekdays as average leads per delivery day, described, not tested; with the
-  // lead rule only inside the comparison group with the most leads (kind × way × time zone)
-  var cmp = leadRule ? weekdayGroup(metrics) : { data: dayData, text: '' };
-  var group = function(days) { return days.reduce(function(t, dow) { t.leads += cmp.data[dow].leads; t.days += cmp.data[dow].days; return t; }, { leads: 0, days: 0 }); };
+  // weekend against weekdays as average leads per delivery day of the bars, described, not tested
+  var group = function(days) { return days.reduce(function(t, dow) { t.leads += dayData[dow].leads; t.days += dayData[dow].days - (dayData[dow].pendingDays || 0); return t; }, { leads: 0, days: 0 }); };
   var weekend = group([6, 0]), weekdays = group([1, 2, 3, 4, 5]);
   var foot = document.getElementById('weekdayFoot');
-  if (weekend.days && weekdays.days && weekdays.leads) {
+  if ((cmp.key || !leadRule) && weekend.days && weekdays.days && weekdays.leads) {
     var diff = Math.round((weekend.leads / weekend.days / (weekdays.leads / weekdays.days) - 1) * 100);
     foot.innerHTML = '<b>Wochenende ' + (diff >= 0 ? 'vorn' : 'hinten') + ' <span class="dl ' + (diff >= 0 ? 'up' : 'dn') + '">' + signedPct(diff) + '</span></b>' +
       '<span>Ø Leads pro Liefertag, Samstag und Sonntag gegenüber Montag bis Freitag</span>';
@@ -3279,9 +3292,9 @@ function renderWeekdayPerformance(metrics) {
     var reason = leadRule && !cmp.key && cmp.unknown ? 'Das Ziel der Anzeigen ist noch nicht hinterlegt' : 'Es fehlen Liefertage am Wochenende oder unter der Woche';
     foot.innerHTML = '<b>Noch kein Vergleich</b><span>' + reason + '</span>';
   }
-  // lead rule: which leads the weekend comparison stands on, behind the info
+  // lead rule: which leads the bars and the weekend comparison stand on, behind the info
   setTip('weekdayTip', 'Info zu Wochentagen', tipParas(['Durchschnittliche Leads pro Liefertag, je Wochentag.',
-    cmp.text ? 'Der Vergleich Wochenende gegen Werktage ist ' + cmp.text + '.' : '']));
+    cmp.text ? 'Balken und Vergleich sind ' + cmp.text + '.' : '']));
 }
 
 // Time zone of a phase's daily values: reporting_context.timezone, else German time
@@ -3296,8 +3309,8 @@ function timezoneText(tz) {
   return tz === 'Europe/Berlin' ? 'deutscher Zeit' : tz === 'America/Los_Angeles' ? 'US-Pazifikzeit' : 'Zeitzone ' + tz;
 }
 
-// Weekday sums of the comparison group with the most leads (R5): kind × way × time zone. A date
-// with pending leads in the group counts in neither the leads nor the days.
+// The comparison group with the most leads (R5): kind × way × time zone, with its rows; the weekday
+// chart sums them (a date with pending leads counts in neither the leads nor the days)
 function weekdayGroup(metrics) {
   const byId = Object.create(null);
   campaigns.forEach(function(c) { byId[c.id] = c; });
@@ -3310,24 +3323,14 @@ function weekdayGroup(metrics) {
     const pool = c ? leadPool(c, web[m.campaign_id]) : null;
     if (!pool) { unknown += 1; return; }
     const key = (campaignKinds[c.id] || 'objekt') + '|' + pool + '|' + campaignTimezone(c);
-    const g = groups[key] || (groups[key] = { key: key, rows: [], leads: 0, pending: Object.create(null) });
+    const g = groups[key] || (groups[key] = { key: key, rows: [], leads: 0 });
     g.rows.push(m);
-    if (m.leads === null || m.leads === undefined) g.pending[m.date] = true;
-    else g.leads += parseInt(m.leads) || 0;
+    g.leads += parseInt(m.leads) || 0;
   });
   const best = Object.values(groups).sort(function(a, b) { return b.leads - a.leads || (a.key < b.key ? -1 : 1); })[0];
-  const data = Object.create(null);
-  for (let i = 0; i < 7; i++) data[i] = { leads: 0, days: 0 };
-  if (!best) return { data: data, text: '', unknown: unknown };
-  const seen = Object.create(null);
-  best.rows.forEach(function(m) {
-    const d = parseDay(m.date);
-    if (!d || best.pending[m.date]) return;
-    data[d.getDay()].leads += parseInt(m.leads) || 0;
-    if (!seen[m.date]) { seen[m.date] = true; data[d.getDay()].days++; }
-  });
+  if (!best) return { rows: [], text: '', unknown: unknown };
   const parts = best.key.split('|');
-  return { data: data, key: best.key, text: 'bezogen auf ' + POOL_LABEL[parts[1]] + '-Leads ' + KIND_GROUP_TEXT[parts[0]] + ' in Konten mit ' + timezoneText(parts.slice(2).join('|')) };
+  return { rows: best.rows, key: best.key, text: 'bezogen auf ' + POOL_LABEL[parts[1]] + '-Leads ' + KIND_GROUP_TEXT[parts[0]] + ' in Konten mit ' + timezoneText(parts.slice(2).join('|')) };
 }
 
 // ============================================
@@ -3512,7 +3515,6 @@ function setSort(field) {
 }
 
 function renderCampaignTable(metrics) {
-  const subset = currentFilter !== 'all';
   let rows = buildProgramRows(metrics).filter(function(row) { return inView(row.flights[0].id); });
   // pooled cost per lead of each kind in view, for the comparison column. With the lead rule the
   // group is kind × way: a campaign's main way (most leads) against the pure phases of that kind
@@ -3536,7 +3538,8 @@ function renderCampaignTable(metrics) {
       row.pool = Object.keys(byPool).sort(function(a, b) { return byPool[b].leads - byPool[a].leads || (a < b ? -1 : 1); })[0] || null;
       // cost per lead of the main way from its phases only; named when the campaign has more
       const main = row.pool ? byPool[row.pool] : null;
-      row.poolCPL = main ? costPerLead(main.spend, main.leads, subset) : null;
+      row.poolCPL = main ? costPerLead(main.spend, main.leads) : null;
+      row.poolLeads = main ? main.leads : 0;
       row.poolNamed = Boolean(main && (Math.abs(main.spend - row.cplSpend) >= 0.005 || main.leads !== row.leads));
     });
     rows.forEach(function(row) {
@@ -3549,7 +3552,7 @@ function renderCampaignTable(metrics) {
       if (!kindTotals[kind]) kindTotals[kind] = { spend: 0, leads: 0, priced: 0 };
       kindTotals[kind].spend += row.spend;
       kindTotals[kind].leads += row.leads;
-      if (costPerLead(row.spend, row.leads, subset) !== null) kindTotals[kind].priced++;
+      if (costPerLead(row.spend, row.leads) !== null) kindTotals[kind].priced++;
     });
   }
   const allRows = rows.length;
@@ -3599,13 +3602,16 @@ function renderCampaignTable(metrics) {
     const program = row.program;
     const kind = campaignKindOf(program);
     const multi = row.flights.length > 1;
-    const cpl = costPerLead(row.cplSpend, row.leads, subset);
+    const cpl = costPerLead(row.cplSpend, row.leads);
     const kt = kindTotals[groupOf(row)];
     // lead rule: "464 Website · 4 Formular" only with both ways, "dazu 6 weitere Website-Anfragen"
     const mix = mixHTML(mixParts(row));
     let compare = '';
     const own = leadRule ? row.poolCPL : cpl;
-    if (cpl !== null && own !== null && kt && kt.priced >= 2 && kt.leads > 0) {
+    // as in the detail comparison: the campaign needs 5 leads (of its main way) on 4 days, the average
+    // MIN_SUBSET_LEADS leads of its own (R4)
+    const ready = (leadRule ? row.poolLeads : row.leads) >= 5 && row.dates.length >= 4;
+    if (cpl !== null && own !== null && ready && kt && kt.priced >= 2 && kt.leads >= MIN_SUBSET_LEADS) {
       const diff = Math.round((own / (kt.spend / kt.leads) - 1) * 100);
       // lead rule: a campaign with phases of another way compares its main way, and says which
       const way = leadRule && row.poolNamed ? '<span class="muted way"><em>pro </em>' + POOL_LABEL[row.pool] + '<em>-Lead</em></span>' : '';
@@ -3628,7 +3634,7 @@ function renderCampaignTable(metrics) {
       '<span class="c-time st-cell">' + statusHTML(row.status, escHtml(row.periodText)) + '</span>' +
       '<span class="r c-leads" style="font-weight:600">' + formatNum(row.leads) + '</span>' +
       '<span class="r c-spend">' + formatEUR(row.spend) + '</span>' +
-      '<div class="cpl r"><b>' + (cpl !== null ? formatEUR(cpl) : '—') + '</b>' + (cpl === null && row.leads > 0 ? '<span class="muted">unter ' + MIN_SUBSET_LEADS + ' Leads</span>' : compare) + '</div>' +
+      '<div class="cpl r"><b>' + (cpl !== null ? formatEUR(cpl) : '—') + '</b>' + compare + '</div>' +
       '<span class="chev">' + I('chev') + '</span>';
     container.appendChild(div);
   });
@@ -3737,13 +3743,13 @@ function creativeScopeText(group, detail) {
   if (!group.narrowed) return 'Die Karten gelten für die gesamte Laufzeit.';
   return 'Die Karten zeigen ' + (detail ? 'nur ' + POOL_LABEL[group.pool] + '-Leads' : POOL_LABEL[group.pool] + '-Leads ' + KIND_GROUP_TEXT[group.kind]) + ' über die gesamte Laufzeit.';
 }
-// compare: 'shown' when Data Intelligence shows a format comparison that covers these cards (object
+// compare: 'shown' when Data Intelligence shows the talking-head comparison that covers these cards (object
 // campaigns, not website phases), 'waiting' for object campaigns before it can be shown, null otherwise
 // (owner or recruiting campaigns are never compared by format)
 function creativeTipHTML(group, detail, compare) {
   return tipParas(['Meta verteilt das Budget selbst auf die Anzeigen einer Kampagne.' +
-      (compare === 'shown' ? ' Ob sich ein Format lohnt, zeigt der Formatvergleich unter Data Intelligence.'
-        : compare === 'waiting' ? ' Ob sich ein Format lohnt, vergleichen wir, sobald genug Kampagnen mit dem Format gelaufen sind.' : ''),
+      (compare === 'shown' ? ' Ob sich Talking Head lohnt, zeigt der Vergleich unter Data Intelligence.'
+        : compare === 'waiting' ? ' Ob sich Talking Head lohnt, vergleichen wir, sobald genug Kampagnen mit Talking Head gelaufen sind.' : ''),
     creativeScopeText(group, detail)]);
 }
 function creativeCompare(group) {
@@ -3814,7 +3820,6 @@ function renderDetailView(campaignIds, context) {
   const prop = context.property || Object.create(null);
   const campaignMetrics = getFilteredMetrics().filter(function(metric) { return idSet.has(metric.campaign_id); });
   const kind = campaignKindOf(context.program);
-  const subset = currentFilter !== 'all' || Boolean(context.flight);
 
   const hero = document.getElementById('detailHero');
   hero.innerHTML = artHTML(kind, prop.property_type, context.program ? context.program.id : ids[0], '');
@@ -3846,7 +3851,7 @@ function renderDetailView(campaignIds, context) {
   // lead rule: a day with pending leads counts as a day of the budget, not of the leads per day
   const pendingDates = new Set(leadRule ? campaignMetrics.filter(function(m) { return m.leads === null || m.leads === undefined; }).map(function(m) { return m.date; }) : []);
   const leadDays = Array.from(activeDates).filter(function(d) { return !pendingDates.has(d); }).length;
-  const avgCPL = costPerLead(totals.cplSpend, totalLeads, subset);
+  const avgCPL = costPerLead(totals.cplSpend, totalLeads);
   const avgCPM = totalImpressions > 0 ? (totalSpend / totalImpressions) * 1000 : null;
   const leadsPerDay = leadDays > 0 ? totalLeads / leadDays : 0;
   const clicks = clickStats(campaignMetrics);
@@ -3885,13 +3890,13 @@ function renderDetailView(campaignIds, context) {
   const kpi = function(label, value, sub, tip) {
     return '<div class="card s-kpi"><span' + (tip ? ' class="s-kpi-t">' + label + infoTipHTML('Info zur ' + label, tip) : '>' + label) + '</span><b>' + value + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>';
   };
-  // lead rule: the split as in the head; a cost per way only from pure phases with 20 leads (R3)
+  // lead rule: the split as in the head; a cost per way only from pure phases (R3)
   const phaseRows = context.program ? buildProgramRows(getFilteredMetrics()).find(function(r) { return r.program.id === context.program.id; }) : null;
   const costs = phaseRows ? typeCosts(phaseRows.flights.filter(function(f) { return idSet.has(f.id); })) : null;
-  const costText = costs ? costs.map(function(c) { return POOL_LABEL[c.type] + ' ' + (c.cpl !== null ? formatEUR(c.cpl) : 'unter ' + MIN_SUBSET_LEADS + ' Leads'); }).join(' · ') : '';
+  const costText = costs ? costs.map(function(c) { return POOL_LABEL[c.type] + ' ' + formatEUR(c.cpl); }).join(' · ') : '';
   document.getElementById('detailKpiGrid').innerHTML =
     kpi('Leads', formatNum(totalLeads), escHtml(splitText(totals)) || plural(days, 'Tag', 'Tage') + ' · Ø\u00a0' + formatDecimal(leadsPerDay, 1) + ' pro Tag') +
-    kpi('Kosten pro Lead', avgCPL !== null ? formatEUR(avgCPL) : '—', costText ? escHtml(costText) : avgCPL === null && totalLeads > 0 ? 'erst ab ' + MIN_SUBSET_LEADS + ' Leads' : 'Mediabudget geteilt durch Leads') +
+    kpi('Kosten pro Lead', avgCPL !== null ? formatEUR(avgCPL) : '—', costText ? escHtml(costText) : 'Mediabudget geteilt durch Leads') +
     kpi('Mediabudget', formatEUR(totalSpend), 'Ø\u00a0' + formatEUR(totalSpend / Math.max(days, 1)) + ' pro Tag') +
     kpi('Klickrate', clicks.ctr !== null ? formatPercent(clicks.ctr, 2) : '—', clickSub(clicks), clickTipHTML(clicks)) +
     kpi('Impressionen', formatNum(totalImpressions), avgCPM !== null ? 'Ø\u00a0' + formatEUR(avgCPM) + ' pro 1.000' : '');
@@ -3952,7 +3957,7 @@ function renderDetailFlights(program, ids) {
       const width = ((parseDay(dates[dates.length - 1]) - parseDay(dates[0])) / 86400000 + 1) / span * 100;
       bar = '<i style="left:' + left.toFixed(2) + '%;width:' + width.toFixed(2) + '%;background:' + color + '"></i>';
     }
-    const cpl = costPerLead(flight.fCplSpend, flight.fLeads, true);
+    const cpl = costPerLead(flight.fCplSpend, flight.fLeads);
     // lead rule: the way of the phase as a chip, further website requests as a quiet line; the ad
     // account as a chip when the client has phases in both kinds of account
     const chips = [sourceChip(flight), accountChip(flight)].filter(Boolean);
@@ -3969,7 +3974,7 @@ function renderDetailFlights(program, ids) {
       '<span class="c-time"><span class="phase-track">' + bar + '</span></span>' +
       '<span class="r c-leads" style="font-weight:600">' + formatNum(flight.fLeads) + '</span>' +
       '<span class="r c-spend">' + formatEUR(flight.fSpend) + '</span>' +
-      '<div class="cpl r"><b>' + (cpl !== null ? formatEUR(cpl) : '—') + '</b>' + (cpl === null && flight.fLeads > 0 ? '<span class="muted">unter ' + MIN_SUBSET_LEADS + ' Leads</span>' : '') + '</div>' +
+      '<div class="cpl r"><b>' + (cpl !== null ? formatEUR(cpl) : '—') + '</b></div>' +
       '<span class="chev">' + I('chev') + '</span>';
     list.appendChild(div);
   });
@@ -4065,8 +4070,8 @@ function renderDetailBenchmark(campaignIds, totalSpend, totalLeads, totalImpress
   var others = Object.values(perCampaign)
     .map(function(e) { return { spend: e.spend, leads: e.leads, impressions: e.impressions, days: e.dates.size, program: e.program }; })
     .filter(function(e) { return e.leads >= 5 && e.days >= 4; });
-  // the own cost per lead needs enough leads to be compared at all
-  if (totalLeads < MIN_SUBSET_LEADS) { container.innerHTML = ''; return; }
+  // the own side needs what the phases it is compared with need: 5 leads on 4 days
+  if (!(totalLeads >= 5 && days >= 4)) { container.innerHTML = ''; return; }
   // lead rule: the average needs MIN_SUBSET_LEADS leads itself (R4) and phases of at least two
   // campaigns, so a campaign's own test phases are never the yardstick
   if (leadRule) {
@@ -4314,10 +4319,19 @@ function renderDetailSum(data) {
   let parts;
   if (detailMetric === 'cpl') {
     const shown = data.map(function(v, i) { return { v: v, i: i }; }).filter(function(x) { return x.v !== null; });
-    if (!shown.length) parts = ['Kein 7-Tage-Wert, weil keine 7 Tage auf ' + MIN_SUBSET_LEADS + ' Leads kommen'];
+    if (!shown.length) parts = ['Noch kein Lead, daher kein 7-Tage-Wert'];
     else {
-      const last = shown[shown.length - 1], best = shown.reduce(function(a, b) { return b.v < a.v ? b : a; });
-      parts = ['zuletzt <b>' + formatEUR(last.v) + '</b>', 'bester 7-Tage-Wert <b>' + formatEUR(best.v) + '</b> in der Woche bis ' + formatDateShort(detailSlots[best.i].date), 'nur wo 7 Tage mindestens ' + MIN_SUBSET_LEADS + ' Leads haben'];
+      // the line shows from the first lead; the best value only from windows of 7 full calendar days without a
+      // pause, as it says: each slot knows the first day after the last pause before it
+      let run = null;
+      const runStart = detailSlots.map(function(s) {
+        if (s.kind === 'pause' || s.kind === 'missing') { run = null; return null; }
+        if (!run && s.date) run = parseDay(s.date);
+        return run;
+      });
+      const full = shown.filter(function(x) { const end = parseDay(detailSlots[x.i].date), from = runStart[x.i]; return end && from && (end - from) / 864e5 >= 6; });
+      const last = shown[shown.length - 1], best = full.length ? full.reduce(function(a, b) { return b.v < a.v ? b : a; }) : null;
+      parts = ['zuletzt <b>' + formatEUR(last.v) + '</b>'].concat(best ? ['bester 7-Tage-Wert <b>' + formatEUR(best.v) + '</b> in der Woche bis ' + formatDateShort(detailSlots[best.i].date)] : []);
     }
   } else if (detailMetric === 'spend') {
     parts = ['Ø <b>' + formatEUR(n ? spend / n : 0) + '</b> pro Liefertag', 'zusammen <b>' + formatEUR(spend) + '</b>', n + (n === 1 ? ' Liefertag' : ' Liefertage')];
@@ -4440,7 +4454,7 @@ function drawDetailChart(first) {
     // the 7 calendar days up to this day, never reaching across a pause
     const end = parseDay(s.date);
     const slice = detailDays.filter(function(d) { const t = parseDay(d.date); return end && t && t <= end && (end - t) / 864e5 < 7; });
-    const cpl = costPerLead(slice.reduce(function(sum, d) { return sum + d.cplSpend; }, 0), slice.reduce(function(sum, d) { return sum + d.leads; }, 0), true);
+    const cpl = costPerLead(slice.reduce(function(sum, d) { return sum + d.cplSpend; }, 0), slice.reduce(function(sum, d) { return sum + d.leads; }, 0));
     return cpl !== null ? Math.round(cpl * 100) / 100 : null;
   });
   const second = stacked && !isLine ? slots.map(function(s) { return barValue(s, 1); }) : null;
@@ -4484,7 +4498,7 @@ function drawDetailChart(first) {
         const title = d ? d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
         if (slot.kind === 'empty') return tipHTML(title, [[null, 'keine Auslieferung', '']]);
         const v = chart.data.datasets[0].data[i];
-        if (detailMetric === 'cpl') return tipHTML(title, [[color, 'Kosten pro Lead, 7 Tage', v !== null ? formatEUR(v) : 'unter ' + MIN_SUBSET_LEADS + ' Leads']]);
+        if (detailMetric === 'cpl') return tipHTML(title, [[color, 'Kosten pro Lead, 7 Tage', v !== null ? formatEUR(v) : 'keine Leads']]);
         if (!leadRule) return tipHTML(title, [[color, 'Leads', formatNum(slot.leads)], [null, 'Mediabudget', formatEUR(slot.spend)]]);
         return detailDayTip(title, chart.$days.find(function(x) { return x.date === slot.date; }), stacked ? ways : null, colors, color);
       } } }
@@ -4689,8 +4703,8 @@ const CREATIVE_LABELS = Object.freeze(Object.assign(Object.create(null), {
   'th_reel': 'Talking-Head-Reel',
   'scn_reel': 'Szenisches Reel',
   'single_image': 'Einzelbild',
-  'carousel': 'Karussell',
-  'karussell': 'Karussell',
+  'carousel': 'Carousel',
+  'karussell': 'Carousel',
   'reel': 'Reel',
   'video': 'Video',
   'story': 'Story',
@@ -4764,7 +4778,6 @@ const INTEL = Object.freeze({
 const INTEL_DAY_BUCKETS = Object.freeze([[1, 3], [4, 7], [8, 14], [15, 21], [22, Infinity]]);
 const INTEL_SPEND_BUCKETS = Object.freeze([[0, 150], [150, 300], [300, 500], [500, 750], [750, Infinity]]);
 const INTEL_SPEND_MARKS = Object.freeze([250, 500, 750, 1000]);
-const INTEL_MILESTONES = Object.freeze([1, 10, 25, 50]);
 const INTEL_AGES = Object.freeze(['18-24', '25-34', '35-44', '45-54', '55-64', '65+']);
 
 // Small deterministic generator, so bootstrap ranges do not change between page loads
@@ -5338,18 +5351,17 @@ function marginalCpl(objects) {
   });
 }
 
-// What happened after the start: milestones and leads at spend marks (algo/intel/a03)
+// What happened after the start: leads at spend marks (algo/intel/a03)
 function expectationValues(objects) {
   const rows = objects.filter(function(o) { return o.leads > 0; }).map(function(o) {
     let spend = 0, leads = 0;
-    const hit = Object.create(null), at = Object.create(null);
+    const at = Object.create(null);
     o.series.forEach(function(d) {
       spend += d.spend;
       leads += d.leads;
-      INTEL_MILESTONES.forEach(function(m) { if (!hit[m] && leads >= m) hit[m] = { day: d.day, spend: spend }; });
       INTEL_SPEND_MARKS.forEach(function(mark) { if (!(mark in at) && spend >= mark) at[mark] = leads; });
     });
-    return { id: o.id, name: o.name, hit: hit, at: at };
+    return { id: o.id, name: o.name, at: at };
   });
   const stats = function(v) {
     return v.length ? { n: v.length, median: intelMedian(v), min: Math.min.apply(null, v), max: Math.max.apply(null, v), values: v.slice().sort(function(a, b) { return a - b; }) } : null;
@@ -5357,12 +5369,6 @@ function expectationValues(objects) {
   return {
     n: rows.length,
     level: rows.length >= 5 ? 'median' : rows.length >= 3 ? 'single' : 'none',
-    firstLeadDay1: rows.filter(function(r) { return r.hit[1] && r.hit[1].day === 1; }).length,
-    milestones: INTEL_MILESTONES.map(function(m) {
-      const hits = rows.filter(function(r) { return r.hit[m]; }).map(function(r) { return r.hit[m]; });
-      return { lead: m, reached: hits.length, of: rows.length,
-        day: stats(hits.map(function(h) { return h.day; })), spend: stats(hits.map(function(h) { return h.spend; })) };
-    }),
     atSpend: INTEL_SPEND_MARKS.map(function(mark) {
       return Object.assign({ mark: mark }, stats(rows.filter(function(r) { return mark in r.at; }).map(function(r) { return r.at[mark]; })) || { n: 0 });
     })
@@ -5533,19 +5539,49 @@ function genderSplit(objects, demoRows) {
   const away95 = out.ci95[0] > 1 || out.ci95[1] < 1, away80 = out.ci80[0] > 1 || out.ci80[1] < 1;
   out.level = ids.length >= 8 && total >= 300 && away95 && same >= pairs.length * 2 / 3 ? 'belastbar'
     : ids.length >= 5 && total >= 150 && away80 ? 'tendenz' : 'none';
-  // shown from 12 properties with 150 leads; without a clear range only as a first reading
-  out.shown = ids.length >= INTEL.minUnits && total >= 150 && Number.isFinite(rr);
+  // shown from 12 properties with 150 leads, without a clear range as a first reading; when fewer have Meta's
+  // breakdown, a client with 12 properties sees it once it is belastbar (Oskar, 30.10.2026)
+  out.shown = total >= 150 && Number.isFinite(rr) && (ids.length >= INTEL.minUnits || (objects.length >= INTEL.minUnits && out.level === 'belastbar'));
   return out;
 }
 
-// Share of leads per age group; descriptive only, from 100 leads
-function ageShares(objects, demoRows) {
+// Each age group against the other age groups of the same properties: share of the leads (from 100 leads)
+// and the rate ratio of leads per euro with interval, like men against women (the page turns it into the
+// difference in the cost per lead). Six groups are tested together, so their ranges are widened until all six
+// together keep 80 and 95 % (Bonferroni; ci80 and ci95 are these family ranges), and a group needs the same
+// direction in two thirds of its properties. Tendenz from 5 properties with spend on both sides and 50 leads,
+// belastbar from 8 and 100; only for a client with 12 properties.
+function ageSplit(objects, demoRows) {
   const by = demoByObject(objects, demoRows);
-  const leads = INTEL_AGES.map(function(age) {
-    return Object.keys(by).reduce(function(t, id) { return t + ((by[id].age[age] || {}).leads || 0); }, 0);
+  const ids = Object.keys(by), k = INTEL_AGES.length;
+  const cell = function(id, age) { return by[id].age[age] || { leads: 0, spend: 0 }; };
+  const total = ids.reduce(function(t, id) { return t + INTEL_AGES.reduce(function(x, age) { return x + cell(id, age).leads; }, 0); }, 0);
+  const rows = INTEL_AGES.map(function(age, i) {
+    // per property: the age group (a) against the other age groups (b)
+    const strata = ids.map(function(id) {
+      const rest = INTEL_AGES.reduce(function(t, other) {
+        const c = cell(id, other);
+        return other === age ? t : { leads: t.leads + c.leads, spend: t.spend + c.spend };
+      }, { leads: 0, spend: 0 });
+      return { a: cell(id, age).leads, sa: cell(id, age).spend, b: rest.leads, sb: rest.spend };
+    });
+    const leads = strata.reduce(function(t, x) { return t + x.a; }, 0);
+    const nObj = strata.filter(function(x) { return x.sa > 0 && x.sb > 0; }).length;
+    const pairs = strata.filter(function(x) { return x.sa > 0 && x.sb > 0 && x.b > 0; });
+    const better = pairs.filter(function(x) { return x.a / x.sa > x.b / x.sb; }).length;
+    const rr = mantelHaenszel(strata);
+    // more draws than usual: the widened ranges read far into the tails
+    const boot = intelBootstrap(strata.length, function(idx) { return [mantelHaenszel(idx.map(function(j) { return strata[j]; }))]; }, INTEL.draws * 4, INTEL.seed + 10 + i)
+      .map(function(v) { return v[0]; });
+    const ci95 = intelInterval(boot, 1 - 0.05 / k), ci80 = intelInterval(boot, 1 - 0.2 / k);
+    const away95 = ci95[0] > 1 || ci95[1] < 1, away80 = ci80[0] > 1 || ci80[1] < 1;
+    const steady = pairs.length > 0 && Math.max(better, pairs.length - better) >= pairs.length * 2 / 3;
+    const level = !Number.isFinite(rr) || objects.length < INTEL.minUnits || !steady ? 'none'
+      : nObj >= 8 && leads >= 100 && away95 ? 'belastbar'
+      : nObj >= 5 && leads >= 50 && away80 ? 'tendenz' : 'none';
+    return { age: age, leads: leads, nObj: nObj, share: total ? leads / total : 0, rr: rr, ci95: ci95, ci80: ci80, pairs: pairs.length, better: better, level: level };
   });
-  const total = leads.reduce(function(t, v) { return t + v; }, 0);
-  return { total: total, shown: total >= 100, rows: INTEL_AGES.map(function(age, i) { return { age: age, leads: leads[i], share: total ? leads[i] / total : 0 }; }) };
+  return { nObj: ids.length, total: total, shown: total >= 100, rows: rows };
 }
 
 const INTEL_CITY_STATE = Object.freeze(Object.assign(Object.create(null), {
@@ -6142,10 +6178,14 @@ function intelComparisons() {
   }
   return data.comparisons;
 }
-// Whether Data Intelligence shows a format card (inside the campaigns from 12 campaigns, or between whole
-// campaigns from 12 with 4 with and 4 without)
+// What the client portal shows of the format comparisons: talking head inside its campaigns. Scenic video,
+// whole campaigns and contents are findings for the agency dashboard (Oskar, 30.10.2026).
+function portalComparisons(cmp) {
+  return Object.assign({}, cmp, { formats: cmp.formats.filter(function(f) { return f.key === 'th'; }), tags: [], insideOnly: true });
+}
+// Whether Data Intelligence shows the talking-head card (inside the campaigns, from 12 campaigns)
 function formatComparisonShown() {
-  return intelData().objects.length >= INTEL.minUnits && intelComparisons().formats.some(function(f) { return f.level >= 1 || (f.within && f.within.level >= 1); });
+  return intelData().objects.length >= INTEL.minUnits && portalComparisons(intelComparisons()).formats.some(function(f) { return f.within && f.within.level >= 1; });
 }
 
 function destroyIntelCharts() {
@@ -6238,16 +6278,16 @@ function renderIntelligence() {
     return;
   }
   const ramp = rampCurve(O), marginal = marginalCpl(O), expect = expectationValues(O), shrink = shrinkObjects(O);
-  // formats and contents between whole campaigns at equal budget, the first section of the tab
+  // the format comparisons; the portal shows talking head inside its campaigns, the first section of the tab
   const cmp = intelComparisons();
-  const gender = genderSplit(O, allDemoInsights), ages = ageShares(O, allDemoInsights), regions = homeRegionShares(O, allGeoInsights);
+  const gender = genderSplit(O, allDemoInsights), ages = ageSplit(O, allDemoInsights), regions = homeRegionShares(O, allGeoInsights);
   // lead rule: the weekend is only compared inside one time zone
   const alloc = budgetAllocation(data.creatives), weekend = leadRule ? weekendByTimezone(O) : weekendContrast(O);
   // only features with 12 properties are listed
   _corrStats = featureCorrelations(O).filter(function(c) { return c.shown; });
   if (_corrStats.length && !_corrStats.some(function(c) { return c.key === corrSelected; })) corrSelected = _corrStats[0].key;
-  basis(waitingLine(O, cmp));
-  box.innerHTML = formatsHTML(cmp) + rampHTML(ramp, marginal, weekend) + expectHTML(expect) + objectsHTML(shrink) +
+  basis(waitingLine(O, portalComparisons(cmp)));
+  box.innerHTML = formatsHTML(cmp) + rampHTML(ramp, weekend) + budgetHTML(marginal, expect) + objectsHTML(shrink) +
     corrHTML() + audienceHTML(gender, ages, regions, audienceCover(O, regions)) + allocationHTML(alloc);
   applyIcons(box);
   growBars(box);
@@ -6263,16 +6303,17 @@ function renderIntelligence() {
 // campaigns (same account and period) with 4 in each group. A client that never booked a format (or
 // booked it everywhere) is not waiting for its comparison.
 // A format first waits for its comparison inside the campaigns (12 campaigns with the format and other ads);
-// once that is shown, for the one between whole campaigns below it. One line per format at most.
+// once that is shown, for the one between whole campaigns, unless the view shows only the comparison inside
+// them (the portal). One line per format at most.
 function waitingLine(O, cmp) {
   const min = INTEL.minUnits;
   if (O.length < min) return 'Vergleiche erscheinen ab ' + formatNum(min) + ' Objekten; zurzeit ' + formatNum(O.length) + '.';
   if (!cmp) return '';
   // inside the campaigns: some campaign ran the format next to other ads, but fewer than 12
   const inside = cmp.formats.filter(function(f) { return f.within && !f.within.level && f.within.n && f.within.n < min; });
-  // between whole campaigns, once the card stands: waiting for the 12/4 rule only
+  // between whole campaigns, once the card stands: waiting for the 12/4 rule only (not in a view inside the campaigns only)
   const short = function(f) { return (f.n || 0) < min || (f.nA || 0) < 4 || (f.nB || 0) < 4; };
-  const between = cmp.formats.filter(function(f) { return (!f.within || f.within.level >= 1) && !f.level && f.allA && f.allB && short(f); });
+  const between = cmp.insideOnly ? [] : cmp.formats.filter(function(f) { return (!f.within || f.within.level >= 1) && !f.level && f.allA && f.allB && short(f); });
   const lines = inside.map(function(f) {
     return f.title + ' erscheint ab ' + formatNum(min) + ' Kampagnen mit ' + f.ads + ' und anderen Anzeigen; zurzeit ' + formatNum(f.within.n) + '.';
   });
@@ -6342,9 +6383,9 @@ function smallClientHTML(O) {
   return secHeadHTML('Ihre Objekte', tipParas(['Kosten pro Lead über die gesamte Laufzeit.'])) + '<div class="card list">' + rows + '</div>';
 }
 
-// Cost per lead over the run time: the ramp (cost per lead against delivery days 1 to 3), the
-// budget steps and the weekend. Each part only from 12 properties; without any the section is left out.
-function rampHTML(ramp, marginal, weekend) {
+// Cost per lead over the run time: the ramp (cost per lead against delivery days 1 to 3) and the weekend.
+// Each part only from 12 properties; without any the section is left out.
+function rampHTML(ramp, weekend) {
   const shown = ramp.buckets.filter(function(b) { return b.shown; });
   const later = shown.filter(function(b) { return b.level !== 'ref'; });
   const firm = later.filter(function(b) { return b.level === 'belastbar'; });
@@ -6362,23 +6403,10 @@ function rampHTML(ramp, marginal, weekend) {
       stageHTML(ramp.level) + '</div>' +
       '<div class="chart h240"><canvas id="intelRamp"></canvas></div>' + (rampFoot ? '<div class="card-foot">' + rampFoot + '</div>' : '') + '</div>'
     : '';
-  const mShown = marginal.filter(function(m) { return m.shown; });
-  const mFirm = mShown.filter(function(m) { return m.level === 'belastbar'; });
-  const mFoot = mShown.length >= 2 ? (function() {
-    const list = mFirm.length >= 2 ? mFirm : mShown, first = list[0], last = list[list.length - 1];
-    return '<b>' + escHtml(last.to === Infinity ? 'Ab ' + formatEUR(last.from) : formatEUR(last.from) + ' bis ' + formatEUR(last.to)) + ': ' + formatEUR(last.cpl) + ' pro Lead ' +
-      '<span class="dl ' + (last.cpl > first.cpl ? 'dn' : 'up') + '">' + signedPct((last.cpl / first.cpl - 1) * 100) + '</span></b>' +
-      '<span>' + escHtml('gegenüber den ersten ' + formatEUR(first.to) + ' (' + formatEUR(first.cpl) + ') · ' + plural(last.nObj, 'Objekt', 'Objekte')) + '</span>';
-  })() : '';
-  const marginalCard = mShown.length >= 2
-    ? '<div class="card pad"><div class="card-h">' + headTipHTML('h3', 'Kosten pro Lead nach Budgetstufe', tipParas(['Kosten pro Lead, je nachdem, wie viel Budget beim Objekt schon ausgegeben war. Kräftig rote Balken sind belastbar.'])) +
-      (mFirm.length >= 2 ? stageHTML('belastbar') : certHTML(1)) + '</div><div class="chart h240"><canvas id="intelMarginal"></canvas></div><div class="card-foot">' + mFoot + '</div></div>'
-    : '';
   const weekendText = weekendHTML(weekend);
-  if (!rampCard && !marginalCard && !weekendText) return '';
-  const cards = [rampCard, marginalCard].filter(Boolean);
-  return secHeadHTML('Kosten über die Laufzeit', tipParas(['Wie sich die Kosten pro Lead mit Laufzeit und Budget entwickeln.'])) +
-    (cards.length ? '<div class="grid' + (cards.length === 2 ? ' g-2' : '') + '">' + cards.join('') + '</div>' : '') + weekendText;
+  if (!rampCard && !weekendText) return '';
+  return secHeadHTML('Kosten über die Laufzeit', tipParas(['Wie sich die Kosten pro Lead mit der Laufzeit entwickeln.'])) +
+    (rampCard ? '<div class="grid">' + rampCard + '</div>' : '') + weekendText;
 }
 
 // Weekend against weekdays in cost per lead, from 300 delivery days and 12 properties (with the lead
@@ -6452,13 +6480,12 @@ function drawRampCharts(ramp, marginal) {
   }
 }
 
-// What happened after the start, as medians of the own objects. A budget row or milestone appears
-// only when 12 objects reached it; a card without rows is left out, the section without any.
-function expectHTML(e) {
+// What a budget brought the own objects: leads up to each budget (medians, a row from 12 objects) next to
+// the cost per lead by budget step (Oskar, 30.10.2026: side by side, the milestones are gone). A card without
+// rows is left out, the section without any.
+function budgetHTML(marginal, e) {
   const min = INTEL.minUnits;
   const spendList = e.atSpend.filter(function(s) { return s.n >= min; });
-  const msList = e.milestones.filter(function(m) { return m.reached >= min; });
-  if (!spendList.length && !msList.length) return '';
   const maxLeads = Math.max.apply(null, spendList.map(function(s) { return s.max; }).concat([1]));
   const pos = function(v) { return (v / maxLeads * 100).toFixed(2) + '%'; };
   const spendRows = spendList.map(function(s) {
@@ -6466,17 +6493,23 @@ function expectHTML(e) {
       '<span class="band" style="left:' + pos(s.min) + ';width:calc(' + pos(s.max) + ' - ' + pos(s.min) + ')"></span><span class="dot" style="left:' + pos(s.median) + '"></span></span>' +
       '<span class="r xv"><b>' + formatMedian(s.median) + ' Leads</b><small class="parts">' + partsHTML([formatNum(s.min) + ' bis ' + formatNum(s.max), plural(s.n, 'Objekt', 'Objekte')]) + '</small></span></div>';
   }).join('');
-  const msRows = msList.map(function(m) {
-    const days = m.day.min === m.day.max ? 'bei allen am Liefertag ' + formatNum(m.day.min) : 'Spanne ' + formatNum(m.day.min) + ' bis ' + formatNum(m.day.max) + ' Tage';
-    return '<div class="ms"><span class="ms-n">' + m.lead + '.</span><div><b>' + escHtml('Liefertag ' + formatMedian(m.day.median) + ' · ' + formatEUR(Math.round(m.spend.median))) + '</b><small class="parts">' +
-      partsHTML([days + ', ' + formatEUR(Math.round(m.spend.min)) + ' bis ' + formatEUR(Math.round(m.spend.max)), 'erreicht von ' + formatNum(m.reached) + ' von ' + plural(m.of, 'Objekt', 'Objekten')]) + '</small></div></div>';
-  }).join('');
-  const cards = [
-    spendRows ? '<div class="card pad"><div class="card-h">' + headTipHTML('h3', 'Leads nach Budget', tipParas(['Leads bis zu dem Tag, an dem das Budget erreicht war. Punkt = Median, Balken = Spanne.'])) + '</div>' + spendRows + '</div>' : '',
-    msRows ? '<div class="card pad"><div class="card-h">' + headTipHTML('h3', 'Meilensteine', tipParas(['Wann der 1., 10., 25. und 50. Lead kam: Liefertag und Budget im Median, darunter die Spanne.',
-      e.firstLeadDay1 ? 'Der erste Lead kam bei ' + formatNum(e.firstLeadDay1) + ' von ' + plural(e.n, 'Objekt', 'Objekten') + ' am ersten Tag.' : ''])) + '</div>' + msRows + '</div>' : ''
-  ].filter(Boolean);
-  return secHeadHTML('Was nach dem Start zu erwarten ist', tipParas(['So lief es bisher: Median und Spanne Ihrer Objekte, je Zeile mindestens ' + formatNum(min) + ' Objekte.'])) +
+  const leadsCard = spendRows ? '<div class="card pad"><div class="card-h">' + headTipHTML('h3', 'Leads nach Budget', tipParas(['Leads bis zu dem Tag, an dem das Budget erreicht war. Punkt = Median, Balken = Spanne.',
+    'Je Zeile mindestens ' + formatNum(min) + ' Objekte.'])) + '</div>' + spendRows + '</div>' : '';
+  const mShown = marginal.filter(function(m) { return m.shown; });
+  const mFirm = mShown.filter(function(m) { return m.level === 'belastbar'; });
+  const mFoot = mShown.length >= 2 ? (function() {
+    const list = mFirm.length >= 2 ? mFirm : mShown, first = list[0], last = list[list.length - 1];
+    return '<b>' + escHtml(last.to === Infinity ? 'Ab ' + formatEUR(last.from) : formatEUR(last.from) + ' bis ' + formatEUR(last.to)) + ': ' + formatEUR(last.cpl) + ' pro Lead ' +
+      '<span class="dl ' + (last.cpl > first.cpl ? 'dn' : 'up') + '">' + signedPct((last.cpl / first.cpl - 1) * 100) + '</span></b>' +
+      '<span>' + escHtml('gegenüber den ersten ' + formatEUR(first.to) + ' (' + formatEUR(first.cpl) + ') · ' + plural(last.nObj, 'Objekt', 'Objekte')) + '</span>';
+  })() : '';
+  const marginalCard = mShown.length >= 2
+    ? '<div class="card pad"><div class="card-h">' + headTipHTML('h3', 'Kosten pro Lead nach Budgetstufe', tipParas(['Kosten pro Lead, je nachdem, wie viel Budget beim Objekt schon ausgegeben war. Kräftig rote Balken sind belastbar.'])) +
+      (mFirm.length >= 2 ? stageHTML('belastbar') : certHTML(1)) + '</div><div class="chart h240"><canvas id="intelMarginal"></canvas></div><div class="card-foot">' + mFoot + '</div></div>'
+    : '';
+  const cards = [leadsCard, marginalCard].filter(Boolean);
+  if (!cards.length) return '';
+  return secHeadHTML('Was ein Budget bringt', tipParas(['So lief es bisher bei Ihren Objekten: wie viele Leads bis zu einem Budget kamen und was ein Lead auf jeder Budgetstufe kostete.'])) +
     '<div class="grid' + (cards.length === 2 ? ' g-2' : '') + '">' + cards.join('') + '</div>';
 }
 
@@ -6546,12 +6579,6 @@ function formatSummary(f) {
       (f.same ? ' – praktisch gleich' : f.level === 1 ? ' – noch kein klarer Unterschied' : '');
   const parts = ['Bei gleichem Budget im selben Zeitraum', plural(f.nA, 'Kampagne', 'Kampagnen') + ' mit, ' + formatNum(f.nB) + ' ohne'];
   return { head: head, sub: parts.join(' · '), parts: parts };
-}
-
-// The direction of a content in two words under its percentage: "teurer pro Lead", "praktisch gleich"
-function tagDirection(t) {
-  const pct = Math.round(Math.abs(t.effect));
-  return !pct ? 'gleich' : t.same ? 'praktisch gleich' : t.effect > 0 ? 'teurer pro Lead' : 'günstiger pro Lead';
 }
 
 // "mit 7,21 € · ohne 7,48 € (7 gegen 3)": the typical cost per lead of both groups in one period
@@ -6659,7 +6686,7 @@ function ratioText(r) {
 // Every campaign as a dot by how much dearer or cheaper a lead over the format was than over its other ads
 // (log scale, so half and double lie equally far from "gleich"; left cheaper, right dearer); the typical
 // value (median) as a thin red line. A side without a lead sits at the end it points to. The dots are all
-// grey: red means "mit" in the comparison of whole campaigns below, and the sides are named above the strip.
+// grey: red means "mit" in the comparison of whole campaigns (agency dashboard), and the sides are named above the strip.
 // The ticks are factors that read alike on both sides ("halb", "doppelt"), not percentages (−50 % against +100 %).
 const WITHIN_TICKS = Object.freeze([[0.25, 'Viertel'], [0.5, 'halb'], [1, 'gleich'], [2, 'doppelt'], [4, '4-fach'], [8, '8-fach']]);
 function withinStripHTML(f) {
@@ -6681,13 +6708,6 @@ function withinStripHTML(f) {
   const median = 1 + w.effect / 100;
   return '<div class="fc-strip wi"><div class="wi-h"><span>günstiger</span><span>teurer</span></div><div class="fc-s">' + dotRowHTML(dots, [{ v: 1, side: 'z', title: 'gleich' }, { v: median, side: 'a', title: 'Typisch: ' + ratioText(median) }], at) +
     '</div><span class="range-scale">' + ticks.join('') + '</span></div>';
-}
-
-// The comparison between whole campaigns of the same period: the result in bold, its basis in grey, the
-// periods with their campaigns as the evidence
-function betweenHTML(f, budget) {
-  const sum = formatSummary(f);
-  return '<p class="fc-sum"><b>' + escHtml(sum.head) + '</b><span class="parts">' + partsHTML(sum.parts) + '</span></p>' + formatStripHTML(f, budget);
 }
 
 // What the card's info adds to the section's: what the budget Meta gave the format says about the result
@@ -6721,32 +6741,11 @@ function withinTipLines(f) {
   return lines;
 }
 
-// One card per format. The fairest view first, inside the campaigns; below it, when it is shown, the
-// comparison between whole campaigns of the same period. A format shown only between campaigns keeps that.
-function formatCardHTML(f, budget) {
-  const w = f.within;
-  if (!w || w.level < 1) {
-    const sum = formatSummary(f);
-    return '<div class="card pad fc"><div class="card-h"><h3>Kampagnen ' + escHtml(f.label) + '</h3>' + certHTML(f.level) + '</div>' +
-      '<p class="fc-sum"><b>' + escHtml(sum.head) + '</b><span class="parts">' + partsHTML(sum.parts) + '</span></p>' + formatStripHTML(f, budget) + '</div>';
-  }
+// The card of a format inside its campaigns: leads over its ads against the other ads of the same campaigns
+function formatCardHTML(f) {
   const sum = withinSummary(f);
-  const between = f.level >= 1 ? '<div class="fc-sec"><div class="card-h"><h4>Ganze Kampagnen ' + escHtml(f.label) + '</h4>' + certHTML(f.level) + '</div>' +
-    betweenHTML(f, budget) + '</div>' : '';
-  return '<div class="card pad fc"><div class="card-h">' + headTipHTML('h3', f.name, tipParas(withinTipLines(f)), 'Info zu ' + f.name) + certHTML(w.level) + '</div>' +
-    '<p class="fc-sum"><b>' + escHtml(sum.head) + '</b>' + (sum.share ? '<span>' + escHtml(sum.share) + '</span>' : '') + '</p>' + withinStripHTML(f) + between + '</div>';
-}
-
-// Contents as one compact list under the format cards, each with its periods
-function tagListHTML(tags) {
-  return '<div class="card pad tg"><div class="card-h"><h3>Inhalte der Werbemittel</h3></div>' + tags.map(function(t) {
-    const labels = strataLabels(t.strata || []);
-    return '<div class="tg-row"><b class="tg-n">' + escHtml(t.label) + '</b><div class="tg-ss">' + (t.strata || []).map(function(s, i) {
-        return '<span class="tg-s"><span class="fc-p">' + escHtml(labels[i]) + '</span>' + stratumValuesHTML(s) + '</span>';
-      }).join('') + '</div>' +
-      '<div class="tg-r"><b class="tg-e' + (t.same || t.level < 2 ? ' muted' : '') + '">' + signedPct(t.effect) + '<small>' + escHtml(tagDirection(t)) + '</small></b>' +
-      certHTML(t.level) + '</div></div>';
-  }).join('') + '</div>';
+  return '<div class="card pad fc"><div class="card-h">' + headTipHTML('h3', f.name, tipParas(withinTipLines(f)), 'Info zu ' + f.name) + certHTML(f.within.level) + '</div>' +
+    '<p class="fc-sum"><b>' + escHtml(sum.head) + '</b>' + (sum.share ? '<span>' + escHtml(sum.share) + '</span>' : '') + '</p>' + withinStripHTML(f) + '</div>';
 }
 
 // Periods in which every campaign ran with the format, or every one without, for the info:
@@ -6779,7 +6778,7 @@ function apartLines(f, latest, budget) {
 // missing, periods without a comparison), and the stages. What each format's own numbers add sits in its card.
 function formatsTipHTML(cmp) {
   const b = formatEUR(cmp.budget);
-  const shownBetween = cmp.formats.filter(function(f) { return f.level >= 1; });
+  const shownBetween = cmp.insideOnly ? [] : cmp.formats.filter(function(f) { return f.level >= 1; });
   const between = shownBetween.length || (cmp.tags || []).some(function(t) { return t.level >= 1 && !t.sameAs; });
   const missing = [between && cmp.short ? plural(cmp.short, 'Kampagne hat', 'Kampagnen haben') + ' ' + b + ' noch nicht erreicht' : '',
     cmp.unknown ? plural(cmp.unknown, 'Kampagne hat', 'Kampagnen haben') + ' keine Angaben zu den Werbemitteln' : ''].filter(Boolean);
@@ -6793,7 +6792,7 @@ function formatsTipHTML(cmp) {
   const ranges = shownBetween.map(function(f) { return f.name + ' ' + signedPct(f.ci80[0]) + ' bis ' + signedPct(f.ci80[1]); });
   const part = function(title, lines) { return '<b>' + escHtml(title) + '</b>' + lines.map(function(l) { return '<p>' + escHtml(l) + '</p>'; }).join(''); };
   const inside = [
-    'Zuerst innerhalb derselben Kampagne: Leads über die Anzeigen eines Formats gegen Leads über die übrigen Anzeigen, jeweils in derselben Phase. ' +
+    (between ? 'Zuerst innerhalb' : 'Innerhalb') + ' derselben Kampagne: Leads über die Anzeigen eines Formats gegen Leads über die übrigen Anzeigen, jeweils in derselben Phase. ' +
       'Gleiches Objekt, gleiche Zeit, gleiche Zielgruppe, gleiches Werbekonto. Es zählen Phasen mit mindestens 30 € in beiden.',
     'Meta entscheidet selbst, wie viel Budget jede Anzeige bekommt, und mit mehr Budget wird ein Lead meist teurer.',
     'Jeder Punkt ist eine Kampagne: links waren Leads über das Format günstiger, rechts teurer. Der Strich ist der typische Wert: Die Hälfte der Kampagnen lag darunter, die Hälfte darüber.',
@@ -6804,25 +6803,22 @@ function formatsTipHTML(cmp) {
       'Ein Zeitraum zählt ab 2 Kampagnen auf jeder Seite; bei mehreren zählt der Schnitt, Zeiträume mit vielen Kampagnen mit und ohne zählen stärker.',
     'Dort ist jeder Punkt eine Kampagne, rot mit und grau ohne. „Mit“ heißt: mindestens 30 € im Format, und es lief schon auf den ersten ' + b + '.'
   ].concat(apart) : [];
-  return part('So vergleichen wir', inside.concat(whole, ['Szenisches Video: szenische Reels und andere Videos ohne Talking Head. Wirkungen auf die Marke sind nicht enthalten.'],
+  const scenic = cmp.formats.some(function(f) { return f.key !== 'th'; });
+  return part('So vergleichen wir', inside.concat(whole, [scenic ? 'Szenisches Video: szenische Reels und andere Videos ohne Talking Head. Wirkungen auf die Marke sind nicht enthalten.'
+      : 'Wirkungen auf die Marke sind nicht enthalten.'],
     missing.length ? [missing.join(', ') + (missingCount === 1 ? '; sie fehlt.' : '; sie fehlen.')] : [], pending ? [pending] : [])) +
   part('Einordnung', ['Erste Einschätzung ab 12 Kampagnen' + (between ? ' (ganze Kampagnen: je 4 mit und 4 ohne)' : '') + ', Tendenz bei klarer Spanne, belastbar ab 30 Kampagnen. ' +
       'Unter 5 % Unterschied: praktisch gleich.'].concat(ranges.length ? ['Spanne (80 %) ganzer Kampagnen: ' + ranges.join(', ') + '.'] : []));
 }
 
-// First section of the tab: talking head and scenic video, each inside its campaigns (from 12 campaigns)
-// and between whole campaigns of the same account and period (12 campaigns with 4 in each group), and the
-// contents below. A content that splits the campaigns like a card's comparison (sameAs) is not repeated.
-// Without any the section is left out, without a placeholder.
+// First section of the tab: talking head inside its campaigns, from 12 campaigns. Without it the section is
+// left out, without a placeholder.
 function formatsHTML(cmp) {
-  const cards = cmp.formats.filter(function(f) { return f.level >= 1 || (f.within && f.within.level >= 1); });
-  const tags = cmp.tags.filter(function(f) { return f.level >= 1 && !f.sameAs; });
-  if (!cards.length && !tags.length) return '';
-  // two cards side by side only while neither carries the comparison between whole campaigns below it
-  const tall = cards.some(function(f) { return f.within && f.within.level >= 1 && f.level >= 1; });
-  return secHeadHTML('Welche Formate sich lohnen', formatsTipHTML(cmp), 'So vergleichen wir') +
-    (cards.length ? '<div class="grid' + (cards.length === 2 && !tall ? ' g-2' : '') + '">' + cards.map(function(f) { return formatCardHTML(f, cmp.budget); }).join('') + '</div>' : '') +
-    (tags.length ? '<div class="grid"' + (cards.length ? ' style="margin-top:14px"' : '') + '>' + tagListHTML(tags) + '</div>' : '');
+  const view = portalComparisons(cmp);
+  const cards = view.formats.filter(function(f) { return f.within && f.within.level >= 1; });
+  if (!cards.length) return '';
+  return secHeadHTML('Welche Formate sich lohnen', formatsTipHTML(view), 'So vergleichen wir') +
+    '<div class="grid">' + cards.map(function(f) { return formatCardHTML(f); }).join('') + '</div>';
 }
 
 // Each feature in plain words. steps: the steps a reader can picture, largest first ([per, in a sentence,
@@ -7059,8 +7055,9 @@ function audienceCover(O, regions) {
   return { n: ids.size, of: O.length };
 }
 
-// Who asked: shares are described from the data that is there; the cost comparison of men and women
-// appears from 12 properties with 150 leads. Cards without data are left out, the section without any.
+// Who asked and what a lead cost: shares from the data that is there; the cost comparison of men and women
+// from 12 properties with 150 leads, or earlier with a clear range; each age group against the other ages of
+// the same objects. Cards without data are left out, the section without any.
 function audienceHTML(gender, ages, regions, cover) {
   const share = function(c) { return gender.leads ? c.leads / gender.leads * 100 : 0; };
   let gCard = '';
@@ -7094,13 +7091,28 @@ function audienceHTML(gender, ages, regions, cover) {
     }
     gCard = '<div class="card pad"><div class="card-h">' + head + '</div>' + body + '</div>';
   }
+  // age: each group's share and its cost per lead against the other ages of the same objects (Oskar, 30.10.2026:
+  // the shares alone repeat the report). The difference shows where the range is clear.
   const maxShare = Math.max.apply(null, ages.rows.map(function(r) { return r.share; }).concat([0.01]));
-  const aCard = ages.shown ? '<div class="card pad"><div class="card-h">' + headTipHTML('h3', 'Alter', tipParas(['Anteil an den Leads, ohne Bewertung.',
-      'Aus ' + plural(ages.total, 'Lead', 'Leads') + ' mit Altersangabe.'])) + '</div>' +
+  const ageName = function(age) { return age === '65+' ? 'ab 65' : age.replace('-', ' bis '); };
+  const clear = ages.rows.filter(function(r) { return r.leads && (r.level === 'belastbar' || r.level === 'tendenz'); });
+  const ageCost = function(r) { return Math.round((1 / r.rr - 1) * 100); };
+  const ageLine = function(rows) { return rows.map(function(r) { return ageName(r.age) + ' (' + signedPct(ageCost(r)) + ')'; }).join(', '); };
+  const cheaper = clear.filter(function(r) { return ageCost(r) < 0; }).sort(function(a, b) { return ageCost(a) - ageCost(b); });
+  const dearer = clear.filter(function(r) { return ageCost(r) > 0; }).sort(function(a, b) { return ageCost(b) - ageCost(a); });
+  const ageText = clear.length ? [cheaper.length ? 'Günstiger pro Lead: ' + ageLine(cheaper) + '.' : '', dearer.length ? 'Teurer: ' + ageLine(dearer) + '.' : ''].filter(Boolean).join(' ')
+    : 'Zwischen den Altersgruppen zeigt sich noch kein klarer Unterschied in den Kosten pro Lead.';
+  const ageLevel = clear.some(function(r) { return r.level === 'belastbar'; }) ? 'belastbar' : clear.length ? 'tendenz' : null;
+  const aCard = ages.shown ? '<div class="card pad"><div class="card-h">' + headTipHTML('h3', 'Alter', tipParas(['Anteil an den Leads und Kosten pro Lead jeder Altersgruppe ' +
+      'gegenüber den übrigen Altersgruppen derselben Objekte, aus Metas Aufschlüsselung.',
+      'Aus ' + plural(ages.total, 'Lead', 'Leads') + ' mit Altersangabe von ' + plural(ages.nObj, 'Objekt', 'Objekten') + '.',
+      'Ein Unterschied steht erst da, wenn er für alle sechs Altersgruppen zusammen klar ist und in den meisten Objekten in dieselbe Richtung zeigt.'])) +
+      (ageLevel ? stageHTML(ageLevel) : '') + '</div>' +
     ages.rows.map(function(r) {
-      return '<div class="xrow age"><span class="lb">' + escHtml(r.age === '65+' ? 'ab 65' : r.age.replace('-', ' bis ')) + '</span><span class="track"><i data-w="' + (r.share / maxShare * 100).toFixed(1) + '%" style="width:0;background:#E7352E"></i></span>' +
-        '<span class="r xv"><b>' + pctText(r.share * 100, 0) + '</b></span></div>';
-    }).join('') + '</div>' : '';
+      const cost = clear.indexOf(r) >= 0 ? signedPct(ageCost(r)) + ' pro Lead' : plural(r.leads, 'Lead', 'Leads');
+      return '<div class="xrow age"><span class="lb">' + escHtml(ageName(r.age)) + '</span><span class="track"><i data-w="' + (r.share / maxShare * 100).toFixed(1) + '%" style="width:0;background:#E7352E"></i></span>' +
+        '<span class="r xv"><b>' + pctText(r.share * 100, 0) + '</b><small>' + escHtml(cost) + '</small></span></div>';
+    }).join('') + '<p class="cx-text">' + escHtml(ageText) + '</p></div>' : '';
   const rCard = regions.rows.length ? '<div class="card pad"><div class="card-h">' + headTipHTML('h3', 'Herkunft', tipParas(['Anteil der Leads aus dem Bundesland des Objekts. ' +
       'Das beschreibt die Auslieferung, es erklärt keine Kosten.'])) + '</div>' +
     '<div class="xcols">' + regions.rows.map(function(r) {
@@ -7540,11 +7552,11 @@ async function renderGeoMap(containerId, geoData) {
     var id = path.getAttribute('data-state-id');
     if (id !== current) {
       var d = Object.prototype.hasOwnProperty.call(geoData, id) ? geoData[id] : { leads: 0, spend: 0 };
-      var cpl = costPerLead(d.spend, d.leads, true);
+      var cpl = costPerLead(d.spend, d.leads);
       tip.innerHTML = tipHTML(STATE_NAMES[id] || id, [
         [path.style.fill, leadRule ? 'Anteil der Formular-Leads' : 'Anteil der Leads', total > 0 ? formatPercent(d.leads / total * 100, 0) : '—'],
         [null, leadRule ? 'Formular-Leads' : 'Leads', formatNum(d.leads)],
-        [null, 'Kosten pro Lead', cpl !== null ? formatEUR(cpl) : d.leads > 0 ? 'unter ' + MIN_SUBSET_LEADS + ' Leads' : '—']
+        [null, 'Kosten pro Lead', cpl !== null ? formatEUR(cpl) : '—']
       ]);
       current = id;
     }
@@ -7571,7 +7583,7 @@ function renderGeoList(containerId, geoData) {
   if (rest.length) shown.push({ id: 'rest', name: rest.length + ' weitere', leads: rest.reduce(function(s, d) { return s + d.leads; }, 0), spend: rest.reduce(function(s, d) { return s + d.spend; }, 0) });
   var max = Math.max.apply(null, shown.map(function(d) { return d.leads; }));
   container.innerHTML = shown.map(function(d) {
-    var cpl = costPerLead(d.spend, d.leads, true);
+    var cpl = costPerLead(d.spend, d.leads);
     return '<div class="geo-row"><span>' + escHtml(d.name) + '</span><span class="p">' + formatPercent(d.leads / total * 100, 0) +
       (cpl !== null ? '<small>' + formatEUR(cpl) + ' pro Lead</small>' : '') + '</span>' +
       '<span class="track"><i data-w="' + (d.leads / max * 100) + '%" style="width:0;background:#E7352E"></i></span></div>';
@@ -7613,11 +7625,11 @@ function renderDemoBars(containerId, ageData) {
       plugins: { kit: { kind: 'bar', fmt: function(i, ch) {
         var r = ch.$rows[i];
         if (!r) return '';
-        var cpl = costPerLead(r.spend, r.leads, true);
+        var cpl = costPerLead(r.spend, r.leads);
         return tipHTML(r.label === 'ohne Angabe' ? 'Alter ohne Angabe' : r.label + ' Jahre', [
           ['#E7352E', 'Anteil der Leads', formatPercent(r.leads / ch.$total * 100, 1)],
           [null, 'Leads', formatNum(r.leads)],
-          [null, 'Kosten pro Lead', cpl !== null ? formatEUR(cpl) : r.leads > 0 ? 'unter ' + MIN_SUBSET_LEADS + ' Leads' : '—']
+          [null, 'Kosten pro Lead', cpl !== null ? formatEUR(cpl) : '—']
         ], null, [splitText(r)]);
       } } } }
   });
